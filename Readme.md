@@ -81,24 +81,54 @@ Metin anında bilgisayarınızın panosuna kopyalanır. Herhangi bir yere **Ctrl
 - ✏️ **10.000 karakter** — Uzun metinleri bile gönderebilirsiniz
 - 🔄 **Sınırsız gönderim** — Aynı oturumda istediğiniz kadar metin gönderin
 
-## 🚀 Kurulum
+## 🚀 Kurulum (5 Dakikada Hazır)
 
-### Chrome Eklentisini Yükleme
+> 💡 Telefonunuza hiçbir şey yüklemenize gerek yok. Sadece bilgisayarınızdaki Chrome'a ekliyorsunuz.
 
-1. Bu projeyi indirin: **Code → Download ZIP** veya:
-   ```bash
-   git clone https://github.com/Sauth-09/AirPaster.git
-   ```
+### Adım 1 — Projeyi İndir
 
-2. Chrome'da adres çubuğuna `chrome://extensions` yazın
+👉 [**Bu linke tıklayarak ZIP olarak indirin**](https://github.com/Sauth-09/AirPaster/archive/refs/heads/main.zip)
 
-3. Sağ üst köşeden **Geliştirici modu**'nu açın
+İndirilen ZIP dosyasını bir klasöre **çıkartın** (sağ tık → "Tümünü Çıkart").
 
-4. **"Paketlenmemiş öğe yükle"** butonuna tıklayın
+### Adım 2 — Chrome'da Eklenti Sayfasını Aç
 
-5. İndirdiğiniz klasördeki `extension/` klasörünü seçin
+Chrome adres çubuğuna şunu yazıp **Enter**'a basın:
 
-6. ✅ Hazır! Araç çubuğunda AirPaste ikonu görünecek
+```
+chrome://extensions
+```
+
+### Adım 3 — Geliştirici Modunu Aç
+
+Sayfanın **sağ üst köşesindeki** "Geliştirici modu" anahtarını **açık** konuma getirin.
+
+### Adım 4 — Eklentiyi Yükle
+
+1. Sol üstte görünen **"Paketlenmemiş öğe yükle"** butonuna tıklayın
+2. ZIP'ten çıkarttığınız klasörün içindeki **`extension`** klasörünü seçin
+3. **"Klasör Seç"** butonuna basın
+
+### Adım 5 — Hazır! ✅
+
+Araç çubuğunda AirPaste ikonu görünecek. Tıklayın, QR kodu telefonunuzla okutun ve metin göndermeye başlayın!
+
+> 📌 **İpucu:** İkonu göremiyorsanız, Chrome'daki puzzle (🧩) ikonuna tıklayıp AirPaste'in yanındaki 📌 pinleme butonuna basın.
+
+---
+
+## 💌 Arkadaşlarınla Paylaş
+
+Arkadaşlarınız da kullansın! Onlara şu mesajı göndermeniz yeterli:
+
+> *🔗 Telefonundan bilgisayarına metin göndermeni sağlayan bir eklenti buldum!*
+> *5 dakikada kurulur, telefonuna bir şey yüklemiyor:*
+>
+> *👉 https://github.com/Sauth-09/AirPaster*
+>
+> *Sayfadaki "Kurulum" adımlarını takip et, çok kolay.*
+
+Arkadaşlarınızın tek yapması gereken yukarıdaki **Kurulum** bölümündeki 5 adımı takip etmek. Telefonlarına hiçbir şey yüklemelerine gerek yok.
 
 ## ❓ Sık Sorulan Sorular
 
