@@ -104,25 +104,40 @@ export const createFileService = () => {
    * @returns {Promise<{name: string, type: string, size: number, data: string}>}
    */
   const processFile = async (file) => {
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      throw new Error(validation.message);
+    if (!file) {
+      throw new Error("No file selected");
     }
 
     let data;
     let type = file.type;
+    let size = file.size;
 
     if (isImage(file)) {
+      // Compress the image first
       data = await compressImage(file);
       type = "image/jpeg"; // Compressed to JPEG
+      
+      // Calculate approximate size of base64 string in bytes
+      size = Math.round((data.length * 3) / 4);
     } else {
+      // Validate non-image files immediately
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        throw new Error(validation.message);
+      }
       data = await fileToBase64(file);
+    }
+
+    // Final safety check for the resulting data size
+    if (size > MAX_FILE_SIZE) {
+       const sizeMB = (size / (1024 * 1024)).toFixed(1);
+       throw new Error(`File is still too large (${sizeMB}MB) even after processing. Max 2MB.`);
     }
 
     return {
       name: file.name,
       type,
-      size: file.size,
+      size,
       data,
     };
   };
