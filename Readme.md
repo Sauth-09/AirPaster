@@ -2,71 +2,38 @@
 
 # ✈️ AirPaste
 
-### Cloud Clipboard — Instant Text Transfer Between Devices
+### Telefonundan Bilgisayarına Anında Metin Gönder
 
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/Sauth-09/AirPaster)
-[![Firebase](https://img.shields.io/badge/Firebase-Realtime_DB-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Manifest V3](https://img.shields.io/badge/Manifest-V3-8B5CF6?style=for-the-badge&logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-34D399?style=for-the-badge)](LICENSE)
+[![Chrome](https://img.shields.io/badge/Chrome-Eklenti-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/Sauth-09/AirPaster)
+[![License: MIT](https://img.shields.io/badge/Lisans-MIT-34D399?style=for-the-badge)](LICENSE)
 
 <br/>
 
-**AirPaste**, bilgisayar ile telefon arasında anlık metin ve link aktarımını sağlayan bir **Chrome eklentisidir.**
-<br/>QR kodu okut, metni gir, gönder — hepsi bu kadar.
+Telefonunuzdaki bir metni veya linki **bilgisayarınıza anında aktarın.**
+<br/>Kablo yok. Uygulama yükleme yok. Sadece QR kodu okut ve gönder.
 
 <br/>
 
 ```
-📋 Extension → QR Code → 📱 Mobile → Firebase → 💻 Clipboard
+📋 Eklentiyi aç  →  📱 QR'ı okut  →  ✍️ Metni yaz  →  💻 Bilgisayarına geldi!
 ```
-
-<br/>
-
----
 
 </div>
 
-## ✨ Özellikler
+<br/>
 
-<table>
-<tr>
-<td width="50%">
+## 🤔 Nedir?
 
-### 🖥️ Chrome Eklentisi
-- ⚡ Tek tıkla benzersiz oda oluşturma
-- 📱 Otomatik QR kod üretimi
-- 📋 Gelen metin anında panoya kopyalanır
-- 🔄 Yeni oda oluşturma butonu
-- 🎨 Premium dark tema tasarım
+AirPaste, bilgisayarınız ile telefonunuz arasında **metin ve link paylaşmanızı** sağlayan basit bir Chrome eklentisidir.
 
-</td>
-<td width="50%">
+Örneğin:
+- 📱 Telefonunuzda gördüğünüz bir linki bilgisayara göndermek istiyorsunuz
+- 📝 Telefonunuzdaki bir notu hızlıca bilgisayara aktarmak istiyorsunuz
+- 🔑 Bir kodu veya şifreyi cihazlar arasında taşımak istiyorsunuz
 
-### 📱 Mobil Web Arayüzü
-- 🌐 QR kod ile anında bağlantı
-- ✏️ Geniş metin alanı (10.000 karakter)
-- 🚀 Tek tuşla gönderim
-- 📊 Karakter sayacı
-- 📐 Tam responsive tasarım
+AirPaste bunların hepsini **2 saniyede** halleder.
 
-</td>
-</tr>
-</table>
-
-## 🎯 Nasıl Çalışır?
-
-```mermaid
-sequenceDiagram
-    participant 💻 as Bilgisayar
-    participant 🔥 as Firebase
-    participant 📱 as Telefon
-    
-    💻->>💻: Eklentiyi aç → QR kod oluşur
-    📱->>📱: QR kodu okut → Mobil sayfa açılır
-    📱->>🔥: Metni yaz → Gönder
-    🔥-->>💻: Anlık bildirim
-    💻->>💻: Panoya otomatik kopyala ✅
-```
+## 📖 Nasıl Kullanılır?
 
 <table>
 <tr>
@@ -74,230 +41,133 @@ sequenceDiagram
 
 ### 1️⃣
 **Eklentiyi Aç**
-<br/><sub>Chrome'da AirPaste ikonuna tıkla</sub>
+<br/><br/>
+Chrome'da sağ üstteki AirPaste ikonuna tıklayın. Bir QR kod ve oda numarası görünecek.
 
 </td>
 <td align="center" width="25%">
 
 ### 2️⃣
 **QR Kodu Okut**
-<br/><sub>Telefonunla QR kodu tara</sub>
+<br/><br/>
+Telefonunuzun kamerasıyla QR kodu tarayın. Otomatik olarak bir web sayfası açılacak.
 
 </td>
 <td align="center" width="25%">
 
 ### 3️⃣
-**Metni Gönder**
-<br/><sub>Metin veya linki yaz, gönder</sub>
+**Metni Yaz & Gönder**
+<br/><br/>
+Açılan sayfada metin kutusuna istediğinizi yazın ve **"Send to Computer"** butonuna basın.
 
 </td>
 <td align="center" width="25%">
 
 ### 4️⃣
-**Kopyalandı!**
-<br/><sub>Bilgisayar panosuna anında kopyalanır</sub>
+**Hazır! ✅**
+<br/><br/>
+Metin anında bilgisayarınızın panosuna kopyalanır. Herhangi bir yere **Ctrl+V** ile yapıştırın.
 
 </td>
 </tr>
 </table>
 
-## 🏗️ Mimari
+## ⚡ Özellikler
 
-```
-AirPaste/
-├── 📁 extension/                 # Chrome Eklentisi (Manifest V3)
-│   ├── 📄 manifest.json          # Eklenti yapılandırması
-│   ├── 📄 popup.html             # Popup arayüzü
-│   ├── 📄 popup.css              # Premium dark tema stilleri
-│   ├── 📁 src/
-│   │   ├── 📄 popup.js           # UI controller (entry point)
-│   │   ├── 📁 config/
-│   │   │   └── 📄 firebase-config.js
-│   │   ├── 📁 services/
-│   │   │   ├── 📄 firebase-service.js   # Firebase dinleme & temizleme
-│   │   │   ├── 📄 room-service.js       # Oda ID üretimi & URL oluşturma
-│   │   │   ├── 📄 qr-service.js         # QR kod üretimi
-│   │   │   └── 📄 clipboard-service.js  # Pano işlemleri
-│   │   └── 📁 utils/
-│   │       ├── 📄 constants.js
-│   │       └── 📄 dom-helpers.js
-│   ├── 📁 dist/                  # Bundle çıktısı
-│   └── 📁 icons/                 # Eklenti ikonları
-│
-├── 📁 mobile-web/                # Mobil Web Sayfası (GitHub Pages)
-│   ├── 📄 index.html             # Responsive mobil arayüz
-│   ├── 📄 styles.css             # Mobil tema stilleri
-│   ├── 📁 src/
-│   │   ├── 📄 app.js             # App controller (entry point)
-│   │   ├── 📁 config/
-│   │   │   └── 📄 firebase-config.js
-│   │   ├── 📁 services/
-│   │   │   ├── 📄 firebase-service.js   # Firebase'e veri gönderme
-│   │   │   └── 📄 url-service.js        # URL parametre okuma
-│   │   └── 📁 utils/
-│   │       └── 📄 constants.js
-│   └── 📁 dist/                  # Bundle çıktısı
-│
-├── 📄 esbuild.config.mjs         # Build yapılandırması
-├── 📄 package.json
-└── 📄 LICENSE
-```
-
-## 🛠️ Teknoloji Yığını
-
-| Katman | Teknoloji | Amaç |
-|:---|:---|:---|
-| **Eklenti** | Chrome Extension (Manifest V3) | Bilgisayar tarafı arayüz |
-| **Mobil** | Vanilla HTML/CSS/JS | Telefon tarafı arayüz |
-| **Backend** | Firebase Realtime Database | Anlık veri senkronizasyonu |
-| **QR** | qrcode.js | QR kod üretimi |
-| **Bundler** | esbuild | Hızlı build & minify |
-| **Hosting** | GitHub Pages | Mobil web sayfası barındırma |
+- 🔒 **Güvenli** — Veriler geçicidir, okunur okunmaz silinir
+- 📡 **Anlık** — Gönder'e bastığınız anda bilgisayarınıza gelir
+- 🌐 **Kablosuz** — Aynı WiFi'da olmanıza bile gerek yok
+- 📱 **Uygulama Gerektirmez** — Telefonunuzda hiçbir şey yüklemenize gerek yok
+- ✏️ **10.000 karakter** — Uzun metinleri bile gönderebilirsiniz
+- 🔄 **Sınırsız gönderim** — Aynı oturumda istediğiniz kadar metin gönderin
 
 ## 🚀 Kurulum
 
-### Gereksinimler
+### Chrome Eklentisini Yükleme
 
-- [Node.js](https://nodejs.org/) v18+
-- [npm](https://www.npmjs.com/) v9+
-- Google Chrome tarayıcı
-- [Firebase](https://firebase.google.com/) hesabı
+1. Bu projeyi indirin: **Code → Download ZIP** veya:
+   ```bash
+   git clone https://github.com/Sauth-09/AirPaster.git
+   ```
 
-### 1. Projeyi Klonla
+2. Chrome'da adres çubuğuna `chrome://extensions` yazın
 
-```bash
-git clone https://github.com/Sauth-09/AirPaster.git
-cd AirPaster
-```
+3. Sağ üst köşeden **Geliştirici modu**'nu açın
 
-### 2. Bağımlılıkları Yükle
+4. **"Paketlenmemiş öğe yükle"** butonuna tıklayın
 
-```bash
-npm install
-```
+5. İndirdiğiniz klasördeki `extension/` klasörünü seçin
 
-### 3. Firebase Yapılandırması
+6. ✅ Hazır! Araç çubuğunda AirPaste ikonu görünecek
 
-Firebase Console'dan yeni bir proje oluşturun ve **Realtime Database**'i aktifleştirin.
-
-Her iki config dosyasını da kendi Firebase bilgilerinizle güncelleyin:
-
-```
-extension/src/config/firebase-config.js
-mobile-web/src/config/firebase-config.js
-```
+## ❓ Sık Sorulan Sorular
 
 <details>
-<summary>📋 Firebase Güvenlik Kuralları</summary>
-
-```json
-{
-  "rules": {
-    "rooms": {
-      "$roomId": {
-        ".read": true,
-        ".write": true
-      }
-    }
-  }
-}
-```
-
-> ⚠️ Bu kurallar geliştirme içindir. Üretim ortamında daha kısıtlayıcı kurallar kullanın.
-
+<summary><b>Telefonuma uygulama yüklemem gerekiyor mu?</b></summary>
+<br/>
+Hayır! Telefonunuzda herhangi bir uygulama yüklemenize gerek yok. QR kodu okuttuğunuzda açılan web sayfası her şeyi halleder.
 </details>
 
-### 4. Build
+<details>
+<summary><b>Cihazlarım aynı WiFi'da olmalı mı?</b></summary>
+<br/>
+Hayır! AirPaste internet üzerinden çalışır. Telefonunuz mobil veriyle, bilgisayarınız kablolu internetle bağlı olsa bile çalışır.
+</details>
+
+<details>
+<summary><b>Gönderdiğim metinler güvende mi?</b></summary>
+<br/>
+Evet. Metin bilgisayarınıza ulaştığı anda sunucudan otomatik olarak silinir. Kimse göremez.
+</details>
+
+<details>
+<summary><b>Dosya gönderebilir miyim?</b></summary>
+<br/>
+Şu anda sadece metin ve link gönderimi desteklenmektedir. Dosya paylaşımı gelecek sürümlerde planlanmaktadır.
+</details>
+
+<details>
+<summary><b>Hangi tarayıcılarda çalışır?</b></summary>
+<br/>
+Eklenti Google Chrome üzerinde çalışır. Mobil taraftaki web sayfası ise tüm modern tarayıcılarda (Safari, Chrome, Firefox) çalışır.
+</details>
+
+## 🛠️ Geliştiriciler İçin
+
+<details>
+<summary><b>Projeyi geliştirme ortamında çalıştırma</b></summary>
+<br/>
 
 ```bash
-# Tüm bileşenleri build et
+# Bağımlılıkları yükle
+npm install
+
+# Tüm bileşenleri derle
 npm run build
 
-# Sadece extension
-npm run build:extension
-
-# Sadece mobile-web
-npm run build:mobile
-
-# Geliştirme modu (watch)
+# Geliştirme modu (otomatik yeniden derleme)
 npm run dev
 ```
 
-### 5. Chrome'a Yükle
+**Kullanılan Teknolojiler:**
+- Chrome Extension (Manifest V3)
+- Firebase Realtime Database
+- Vanilla HTML / CSS / JavaScript
+- esbuild (bundler)
+- GitHub Pages (mobil web barındırma)
 
-1. Chrome'da `chrome://extensions` adresine gidin
-2. **Geliştirici modu**'nu açın (sağ üst köşe)
-3. **Paketlenmemiş öğe yükle** butonuna tıklayın
-4. `extension/` klasörünü seçin
-5. ✅ AirPaste eklentisi hazır!
-
-### 6. Mobil Web Deploy
-
-`mobile-web/` klasörünü **GitHub Pages** üzerinden yayınlayın.
-
-`extension/src/utils/constants.js` dosyasındaki `MOBILE_WEB_BASE_URL` değerini kendi GitHub Pages URL'nizle güncelleyin:
-
-```js
-export const MOBILE_WEB_BASE_URL = "https://YOUR-USERNAME.github.io/YOUR-REPO/mobile-web/";
-```
-
-## 🎨 Tasarım Prensipleri
-
-<table>
-<tr>
-<td align="center">🌙</td>
-<td><strong>Dark Theme</strong><br/><sub>Göz yormayan premium karanlık tema</sub></td>
-<td align="center">💎</td>
-<td><strong>Glassmorphism</strong><br/><sub>Modern cam efekti tasarım dili</sub></td>
-</tr>
-<tr>
-<td align="center">🔮</td>
-<td><strong>Purple Accent</strong><br/><sub>Tutarlı renk paleti (#8B5CF6)</sub></td>
-<td align="center">✨</td>
-<td><strong>Micro-animations</strong><br/><sub>Pulse, fade, slide animasyonları</sub></td>
-</tr>
-<tr>
-<td align="center">📐</td>
-<td><strong>Responsive</strong><br/><sub>Her ekran boyutuna uyumlu</sub></td>
-<td align="center">🧩</td>
-<td><strong>Modüler</strong><br/><sub>Servis tabanlı temiz mimari</sub></td>
-</tr>
-</table>
-
-## 📐 Kod Mimarisi
-
-Proje **Clean Architecture** prensiplerine uygun olarak tasarlanmıştır:
-
-- ✅ **Dependency Injection** — Servisler factory fonksiyonlar ile oluşturulur
-- ✅ **Interface Segregation** — Her servis `Object.freeze()` ile kapsüllenmiştir
-- ✅ **Single Responsibility** — Her modül tek bir işten sorumludur
-- ✅ **No Business Logic in UI** — İş mantığı servislerde, UI sadece koordine eder
-- ✅ **Functional Programming** — Saf fonksiyonlar ve immutable yapılar
-
-## 🤝 Katkıda Bulunma
-
-Katkılarınızı memnuniyetle karşılıyoruz! 
-
-1. Projeyi **fork** edin
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Add amazing feature'`)
-4. Branch'e push edin (`git push origin feature/amazing-feature`)
-5. **Pull Request** açın
+</details>
 
 ## 📄 Lisans
 
-Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.
+Bu proje [MIT Lisansı](LICENSE) ile açık kaynak olarak sunulmaktadır.
 
 ---
 
 <div align="center">
 
-**Geliştirici:** [Sauth-09](https://github.com/Sauth-09)
+⭐ Projeyi beğendiyseniz bir **yıldız** bırakmayı unutmayın!
 
-⭐ Bu projeyi beğendiyseniz bir **yıldız** bırakmayı unutmayın!
-
-<br/>
-
-<sub>AirPaste ile cihazlar arası metin aktarımı artık çok kolay. 🚀</sub>
+<sub>Geliştirici: <a href="https://github.com/Sauth-09">Sauth-09</a></sub>
 
 </div>
