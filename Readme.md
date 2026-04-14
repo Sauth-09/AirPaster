@@ -1,21 +1,21 @@
 <div align="center">
 
-# ✈️ AirPaste
+# ✈️ AirPaste v3
 
-### Telefonundan Bilgisayarına Anında Metin Gönder
+### İki Cihaz Arasında Metin, Link ve Dosya Paylaşmanın En Hızlı Yolu
 
 [![Chrome](https://img.shields.io/badge/Chrome-Eklenti-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/Sauth-09/AirPaster)
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-34D399?style=for-the-badge)](LICENSE)
 
 <br/>
 
-Telefonunuzdaki bir metni veya linki **bilgisayarınıza anında aktarın.**
-<br/>Kablo yok. Uygulama yükleme yok. Sadece QR kodu okut ve gönder.
+Telefonunuz ile bilgisayarınız arasında **metin, link, fotoğraf ve dosya** aktarın.
+<br/>Kablo yok. Uygulama yükleme yok. Tamamen uçtan uca şifreli.
 
 <br/>
 
-```
-📋 Eklentiyi aç  →  📱 QR'ı okut  →  ✍️ Metni yaz  →  💻 Bilgisayarına geldi!
+```text
+📋 Eklentiyi aç  →  📱 QR'ı okut  →  ✍️ Metin/Dosya seç  →  ✨ Anında aktarıldı!
 ```
 
 </div>
@@ -24,14 +24,15 @@ Telefonunuzdaki bir metni veya linki **bilgisayarınıza anında aktarın.**
 
 ## 🤔 Nedir?
 
-AirPaste, bilgisayarınız ile telefonunuz arasında **metin ve link paylaşmanızı** sağlayan basit bir Chrome eklentisidir.
+AirPaste, bilgisayarınız ile telefonunuz arasında **iki yönlü** veri paylaşmanızı sağlayan, güvenli bir Chrome eklentisidir.
 
 Örneğin:
-- 📱 Telefonunuzda gördüğünüz bir linki bilgisayara göndermek istiyorsunuz
-- 📝 Telefonunuzdaki bir notu hızlıca bilgisayara aktarmak istiyorsunuz
-- 🔑 Bir kodu veya şifreyi cihazlar arasında taşımak istiyorsunuz
+- 📸 Telefonunuzda çektiğiniz bir fotoğrafı bilgisayara göndermek istiyorsunuz
+- 🔗 Telefonunuzda gördüğünüz bir linki bilgisayara aktarmak istiyorsunuz
+- 💻 Bilgisayardaki uzun bir metni hızlıca telefona atmak istiyorsunuz
+- 🔑 Bir şifreyi iki cihaz arasında güvenle (uçtan uca şifreli) taşımak istiyorsunuz
 
-AirPaste bunların hepsini **2 saniyede** halleder.
+AirPaste bunların hepsini saniyeler içinde halleder.
 
 ## 📖 Nasıl Kullanılır?
 
@@ -42,7 +43,7 @@ AirPaste bunların hepsini **2 saniyede** halleder.
 ### 1️⃣
 **Eklentiyi Aç**
 <br/><br/>
-Chrome'da sağ üstteki AirPaste ikonuna tıklayın. Bir QR kod ve oda numarası görünecek.
+Chrome'da AirPaste ikonuna tıklayın. QR kodunuz hazır olarak karşınıza çıkacak.
 
 </td>
 <td align="center" width="25%">
@@ -50,15 +51,15 @@ Chrome'da sağ üstteki AirPaste ikonuna tıklayın. Bir QR kod ve oda numarası
 ### 2️⃣
 **QR Kodu Okut**
 <br/><br/>
-Telefonunuzun kamerasıyla QR kodu tarayın. Otomatik olarak bir web sayfası açılacak.
+Telefon kamerası ile QR kodu tarayın. (İkinci seferde buna bile gerek yok, "Yeniden Bağlan"a tıklamanız yeterli).
 
 </td>
 <td align="center" width="25%">
 
 ### 3️⃣
-**Metni Yaz & Gönder**
+**Gönder!**
 <br/><br/>
-Açılan sayfada metin kutusuna istediğinizi yazın ve **"Send to Computer"** butonuna basın.
+Açılan sayfada metin yazın, link yapıştırın, dosya seçin veya kamera ile fotoğraf çekip gönderin.
 
 </td>
 <td align="center" width="25%">
@@ -66,20 +67,22 @@ Açılan sayfada metin kutusuna istediğinizi yazın ve **"Send to Computer"** b
 ### 4️⃣
 **Hazır! ✅**
 <br/><br/>
-Metin anında bilgisayarınızın panosuna kopyalanır. Herhangi bir yere **Ctrl+V** ile yapıştırın.
+Anında diğer cihaza ulaşır. Metinler kopyalanır, linkler buton halini alır, dosyalar anında indirilebilir.
 
 </td>
 </tr>
 </table>
 
-## ⚡ Özellikler
+## ⚡ Yenilikler ve Özellikler (v3)
 
-- 🔒 **Güvenli** — Veriler geçicidir, okunur okunmaz silinir
-- 📡 **Anlık** — Gönder'e bastığınız anda bilgisayarınıza gelir
-- 🌐 **Kablosuz** — Aynı WiFi'da olmanıza bile gerek yok
-- 📱 **Uygulama Gerektirmez** — Telefonunuzda hiçbir şey yüklemenize gerek yok
-- ✏️ **10.000 karakter** — Uzun metinleri bile gönderebilirsiniz
-- 🔄 **Sınırsız gönderim** — Aynı oturumda istediğiniz kadar metin gönderin
+- 🔒 **Uçtan Uca Şifreli (E2E)** — Verileriniz **AES-256-GCM** ile tarayıcınızda şifrelenir. Güvenlik anahtarı sunucuya bile gitmez, sadece cihazlarınız arasındadır.
+- 🔄 **Çift Yönlü Aktarım** — Sadece telefondan değil, bilgisayardan da telefona veri gönderebilirsiniz.
+- 📸 **Fotoğraf ve Dosya Paylaşımı** — Telefonunuzla fotoğraf çekip veya PDF/Belge seçip 2MB'a kadar dosyaları iletebilirsiniz. Algoritma fotoğrafları otomatik sıkıştırır.
+- 🌙 **Hızlı Yeniden Bağlantı** — Bir kez eşleştikten sonra, 10 dakika boyunca QR kod okutmadan tek tıkla tekrar bağlanabilirsiniz.
+- 🔗 **Akıllı Link Algılama** — Gönderdiğiniz veri bir URL ise tek tıkla "Tarayıcıda Aç" butonu gösterir.
+- 📋 **Geçmiş Sistemi** — Son gönderilen/alınan verileri görebilir ve kolayca yeniden kopyalayabilirsiniz.
+- 🌐 **Kablosuz ve Uygulamasız** — Aynı WiFi'da olmanız gerekmez. Telefonunuza uygulama indirmeniz de gerekmez!
+
 
 ## 🚀 Kurulum (5 Dakikada Hazır)
 
@@ -95,7 +98,7 @@ Metin anında bilgisayarınızın panosuna kopyalanır. Herhangi bir yere **Ctrl
 
 Chrome adres çubuğuna şunu yazıp **Enter**'a basın:
 
-```
+```text
 chrome://extensions
 ```
 
@@ -121,7 +124,7 @@ Araç çubuğunda AirPaste ikonu görünecek. Tıklayın, QR kodu telefonunuzla 
 
 Arkadaşlarınız da kullansın! Onlara şu mesajı göndermeniz yeterli:
 
-> *🔗 Telefonundan bilgisayarına metin göndermeni sağlayan bir eklenti buldum!*
+> *🔗 Cihazlar arasında güvenli uçtan-uca şifreli metin ve fotoğraf göndermeni sağlayan bir eklenti buldum!*
 > *5 dakikada kurulur, telefonuna bir şey yüklemiyor:*
 >
 > *👉 https://github.com/Sauth-09/AirPaster*
@@ -145,15 +148,15 @@ Hayır! AirPaste internet üzerinden çalışır. Telefonunuz mobil veriyle, bil
 </details>
 
 <details>
-<summary><b>Gönderdiğim metinler güvende mi?</b></summary>
+<summary><b>Gönderdiğim metinler ve fotoğraflar güvende mi?</b></summary>
 <br/>
-Evet. Metin bilgisayarınıza ulaştığı anda sunucudan otomatik olarak silinir. Kimse göremez.
+<b>Kesinlikle.</b> Yeni V3 algoritması ile tüm verileriniz Web Crypto API kullanılarak <b>AES-256-GCM</b> şifrelemesi ile tarayıcınızda şifrelenir. Şifreleme anahtarı yalnızca cihazlarınız arasında aktarılır, sunucuya ulaşmaz. Şifreli veri ulaştıktan hemen sonra ise sunucudan kalıcı olarak silinir.
 </details>
 
 <details>
-<summary><b>Dosya gönderebilir miyim?</b></summary>
+<summary><b>Dosya ve fotoğraf gönderebilir miyim?</b></summary>
 <br/>
-Şu anda sadece metin ve link gönderimi desteklenmektedir. Dosya paylaşımı gelecek sürümlerde planlanmaktadır.
+Evet! <b>Fotoğraf ve PDF / Word / Excel / ZIP</b> gibi dosyaları 2MB boyutuna kadar gönderebilirsiniz. Eğer telefonunuzdan çektiğiniz fotoğraf 2MB'tan büyükse, algoritma bunu otomatik olarak boyutlandırıp sıkıştırıp iletiyor.
 </details>
 
 <details>
@@ -179,11 +182,12 @@ npm run build
 npm run dev
 ```
 
-**Kullanılan Teknolojiler:**
+**Kullanılan Teknolojiler (V3):**
 - Chrome Extension (Manifest V3)
 - Firebase Realtime Database
-- Vanilla HTML / CSS / JavaScript
-- esbuild (bundler)
+- Web Crypto API (AES-256-GCM E2E Şifreleme)
+- Vanilla HTML / CSS / JavaScript (ESBuild)
+- Canvas API (Client-side resim sıkıştırma)
 - GitHub Pages (mobil web barındırma)
 
 </details>
