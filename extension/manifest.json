@@ -18,7 +18,8 @@
     "default_title": "AirPaste"
   },
   "permissions": [
-    "clipboardWrite"
+    "clipboardWrite",
+    "notifications"
   ],
   "host_permissions": [
     "https://*.firebaseio.com/*",

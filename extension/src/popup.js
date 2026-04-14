@@ -14,6 +14,7 @@ import { createQRService } from "./services/qr-service.js";
 import { createClipboardService } from "./services/clipboard-service.js";
 import { createHistoryService } from "./services/history-service.js";
 import { createCryptoService } from "./services/crypto-service.js";
+import { createI18nService } from "./services/i18n-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM References
@@ -100,7 +101,7 @@ const updateStatus = (elements, status, message) => {
 // History Rendering
 // ---------------------------------------------------------------------------
 
-const renderHistory = (elements, historyService, clipboardService) => {
+const renderHistory = (elements, historyService, clipboardService, t) => {
   const items = historyService.getItems();
   setText(elements.historyCount, String(items.length));
 
@@ -138,6 +139,21 @@ const renderHistory = (elements, historyService, clipboardService) => {
 // ---------------------------------------------------------------------------
 // File Download Helper
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Notifications Helper
+// ---------------------------------------------------------------------------
+
+const showNotification = (title, message) => {
+  if (chrome && chrome.notifications) {
+    chrome.notifications.create({
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: title,
+      message: message,
+      priority: 2
+    });
+  }
+};
 
 const triggerDownload = (base64Data, fileName, mimeType) => {
   const link = document.createElement("a");
@@ -161,6 +177,10 @@ const initApp = async () => {
   const clipboardService = createClipboardService();
   const historyService = createHistoryService();
   const cryptoService = createCryptoService();
+
+  const i18nService = createI18nService();
+  i18nService.initDom();
+  const t = i18nService.t;
 
   let lastReceivedText = "";
   let lastReceivedFile = null;
@@ -204,25 +224,25 @@ const initApp = async () => {
     try {
       await qrService.generateQRCode(elements.qrContainer, mobileUrl);
     } catch {
-      updateStatus(elements, STATUS.ERROR, "QR code generation failed");
+      updateStatus(elements, STATUS.ERROR, t("qrError"));
       return;
     }
 
-    updateStatus(elements, STATUS.WAITING, "Waiting for connection...");
+    updateStatus(elements, STATUS.WAITING, t("waitingConnection"));
     hide(elements.receivedSection);
     hide(elements.receivedFileSection);
 
     // Listen for incoming data
     firebaseService.listenToRoom(roomId, async (rawData, error) => {
       if (error) {
-        updateStatus(elements, STATUS.ERROR, "Connection error. Try a new room.");
+        updateStatus(elements, STATUS.ERROR, t("connError"));
         return;
       }
       if (!rawData) return;
 
       const data = await decryptPayload(rawData);
       if (!data) {
-        updateStatus(elements, STATUS.ERROR, "Decryption failed");
+        updateStatus(elements, STATUS.ERROR, t("decryptError"));
         return;
       }
 
@@ -246,8 +266,9 @@ const initApp = async () => {
         hide(elements.receivedSection);
 
         historyService.addItem(`📎 ${f.name}`, "received");
-        renderHistory(elements, historyService, clipboardService);
-        updateStatus(elements, STATUS.COPIED, "File received!");
+        renderHistory(elements, historyService, clipboardService, t);
+        updateStatus(elements, STATUS.COPIED, t("fileReceived"));
+        showNotification("AirPaste", `${t("notifFileReceived")} ${f.name}`);
       }
 
       // --- Handle text ---
@@ -258,10 +279,11 @@ const initApp = async () => {
         if (success) {
           lastReceivedText = text;
           historyService.addItem(text, "received");
-          renderHistory(elements, historyService, clipboardService);
+          renderHistory(elements, historyService, clipboardService, t);
 
-          const msg = isUrl(text) ? "Link copied!" : "Copied to clipboard!";
+          const msg = isUrl(text) ? t("linkCopied") : t("copiedClipboard");
           updateStatus(elements, STATUS.COPIED, msg);
+          showNotification("AirPaste", isUrl(text) ? t("notifLinkCopied") : t("notifTextCopied"));
 
           setText(elements.receivedText, text);
           show(elements.receivedSection);
@@ -270,7 +292,7 @@ const initApp = async () => {
           if (isUrl(text)) { show(elements.openLinkBtn); }
           else { hide(elements.openLinkBtn); }
         } else {
-          updateStatus(elements, STATUS.ERROR, "Failed to copy");
+          updateStatus(elements, STATUS.ERROR, t("failedToCopy"));
         }
       }
 
@@ -278,7 +300,7 @@ const initApp = async () => {
       try { await firebaseService.clearRoom(roomId); } catch {}
 
       setTimeout(() => {
-        updateStatus(elements, STATUS.WAITING, "Waiting for more...");
+        updateStatus(elements, STATUS.WAITING, t("waitingMore"));
       }, STATUS_DISPLAY_DURATION);
     });
   };
@@ -301,12 +323,12 @@ const initApp = async () => {
       const payload = await encryptPayload({ text });
       await firebaseService.sendToMobile(currentRoomId, payload);
       historyService.addItem(text, "sent");
-      renderHistory(elements, historyService, clipboardService);
+      renderHistory(elements, historyService, clipboardService, t);
       elements.sendToMobileInput.value = "";
     } catch (err) {
       console.error("[Popup] Send failed:", err);
-      updateStatus(elements, STATUS.ERROR, "Failed to send");
-      setTimeout(() => updateStatus(elements, STATUS.WAITING, "Waiting..."), STATUS_DISPLAY_DURATION);
+      updateStatus(elements, STATUS.ERROR, t("failedToSendToast") || "Failed to send");
+      setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingConnection")), STATUS_DISPLAY_DURATION);
     }
   };
 
@@ -317,8 +339,8 @@ const initApp = async () => {
     if (!lastReceivedText) return;
     const ok = await clipboardService.copyToClipboard(lastReceivedText);
     if (ok) {
-      updateStatus(elements, STATUS.COPIED, "Copied again!");
-      setTimeout(() => updateStatus(elements, STATUS.WAITING, "Waiting..."), STATUS_DISPLAY_DURATION);
+      updateStatus(elements, STATUS.COPIED, t("copiedAgain"));
+      setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingMore")), STATUS_DISPLAY_DURATION);
     }
   });
 
@@ -351,10 +373,10 @@ const initApp = async () => {
 
   on(elements.historyClearBtn, "click", () => {
     historyService.clearHistory();
-    renderHistory(elements, historyService, clipboardService);
+    renderHistory(elements, historyService, clipboardService, t);
   });
 
-  renderHistory(elements, historyService, clipboardService);
+  renderHistory(elements, historyService, clipboardService, t);
   await startNewRoom();
 
   window.addEventListener("unload", () => firebaseService.dispose());

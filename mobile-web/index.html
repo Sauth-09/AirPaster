@@ -28,18 +28,18 @@
         </div>
         <h1 class="logo-text">AirPaste</h1>
       </div>
-      <p class="tagline">Send text to your computer</p>
+      <p class="tagline" data-i18n="tagline">Send text to your computer</p>
     </header>
 
     <!-- Encryption Badge -->
     <div id="encryption-badge" class="encryption-badge hidden">
-      <span>🔒 End-to-end encrypted</span>
+      <span data-i18n="e2eEncrypted">🔒 End-to-end encrypted</span>
     </div>
 
     <!-- Connection Status -->
     <div id="connection-bar" class="connection-bar">
       <div class="connection-dot"></div>
-      <span id="connection-text" class="connection-text">Connected to room</span>
+      <span id="connection-text" class="connection-text" data-i18n="connectedToRoom">Connected to room</span>
       <span id="connection-room-id" class="connection-room-id">----</span>
     </div>
 
@@ -54,22 +54,22 @@
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h2 class="no-room-title">No Room Connected</h2>
-        <p class="no-room-desc">Scan the QR code from the AirPaste extension on your computer to connect.</p>
+        <h2 class="no-room-title" data-i18n="noRoomTitle">No Room Connected</h2>
+        <p class="no-room-desc" data-i18n="noRoomDesc">Scan the QR code from the AirPaste extension on your computer to connect.</p>
 
         <!-- Reconnect button -->
         <button id="reconnect-btn" class="reconnect-btn hidden">
-          <span>🔄 Reconnect to last room</span>
+          <span data-i18n="reconnectBtn">🔄 Reconnect to last room</span>
           <span id="reconnect-info" class="reconnect-info"></span>
         </button>
       </div>
 
       <!-- Text Input Section -->
       <div id="input-section" class="input-section hidden">
-        <label for="text-input" class="input-label">Your text or link</label>
+        <label for="text-input" class="input-label" data-i18n="inputLabel">Your text or link</label>
         <div class="textarea-wrapper">
           <textarea id="text-input" class="text-input"
-            placeholder="Paste or type anything here..."
+            placeholder="Paste or type anything here..." data-i18n-placeholder="inputPlaceholder"
             rows="5" maxlength="10000"></textarea>
           <span id="char-count" class="char-count">0 / 10,000</span>
         </div>
@@ -81,7 +81,7 @@
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
-            <span id="send-btn-text">Send to Computer</span>
+            <span id="send-btn-text" data-i18n="sendBtn">Send to Computer</span>
           </span>
           <div class="send-btn-loader hidden" id="send-btn-loader">
             <div class="spinner"></div>
@@ -92,11 +92,11 @@
         <div class="file-buttons">
           <label class="file-btn" id="photo-btn-label">
             <input type="file" id="photo-input" accept="image/*" capture="environment" hidden/>
-            <span>📸 Photo</span>
+            <span data-i18n="photoBtn">📸 Photo</span>
           </label>
           <label class="file-btn" id="file-btn-label">
             <input type="file" id="file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" hidden/>
-            <span>📁 File</span>
+            <span data-i18n="fileBtn">📁 File</span>
           </label>
         </div>
 
@@ -109,10 +109,10 @@
         <!-- Received from Computer -->
         <div id="received-from-pc" class="received-from-pc hidden">
           <div class="received-from-pc-header">
-            <span class="received-from-pc-label">📥 From Computer</span>
+            <span class="received-from-pc-label" data-i18n="fromComputerLabel">📥 From Computer</span>
             <div class="received-from-pc-actions">
-              <button id="open-link-mobile-btn" class="mobile-action-btn hidden">🔗 Open</button>
-              <button id="copy-received-btn" class="mobile-action-btn">📋 Copy</button>
+              <button id="open-link-mobile-btn" class="mobile-action-btn hidden" data-i18n="openBtn">🔗 Open</button>
+              <button id="copy-received-btn" class="mobile-action-btn" data-i18n="copyBtn">📋 Copy</button>
             </div>
           </div>
           <p id="received-from-pc-text" class="received-from-pc-text"></p>
@@ -121,13 +121,13 @@
         <!-- History -->
         <div class="history-section-mobile">
           <button id="history-toggle-mobile" class="history-toggle-mobile">
-            <span>📜 History</span>
+            <span data-i18n="historyBtn">📜 History</span>
             <span id="history-count-mobile" class="history-count-mobile">0</span>
           </button>
           <div id="history-panel-mobile" class="history-panel-mobile hidden">
             <div id="history-list-mobile" class="history-list-mobile"></div>
-            <button id="history-clear-mobile" class="history-clear-mobile hidden">🗑️ Clear All</button>
-            <p id="history-empty-mobile" class="history-empty-mobile">No history yet</p>
+            <button id="history-clear-mobile" class="history-clear-mobile hidden" data-i18n="historyClear">🗑️ Clear All</button>
+            <p id="history-empty-mobile" class="history-empty-mobile" data-i18n="noHistory">No history yet</p>
           </div>
         </div>
       </div>
@@ -140,7 +140,7 @@
     </div>
 
     <footer class="footer">
-      <p>AirPaste &mdash; Cloud Clipboard</p>
+      <p data-i18n="footerText">AirPaste &mdash; Cloud Clipboard</p>
     </footer>
   </div>
 

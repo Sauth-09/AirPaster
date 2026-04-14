@@ -14,6 +14,7 @@ import { createHistoryService } from "./services/history-service.js";
 import { createCryptoService } from "./services/crypto-service.js";
 import { createFileService } from "./services/file-service.js";
 import { createSessionService } from "./services/session-service.js";
+import { createI18nService } from "./services/i18n-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM Helpers
@@ -129,7 +130,7 @@ const updateCharCount = (elements) => {
 // History Rendering
 // ---------------------------------------------------------------------------
 
-const renderHistory = (elements, historyService) => {
+const renderHistory = (elements, historyService, t) => {
   const items = historyService.getItems();
   setText(elements.historyCount, String(items.length));
 
@@ -159,11 +160,11 @@ const renderHistory = (elements, historyService) => {
     if (item) {
       try {
         await navigator.clipboard.writeText(item.fullText);
-        showToast(elements, "Copied!", "success");
+        showToast(elements, t("copiedToast"), "success");
       } catch {
         elements.textInput.value = item.fullText;
         updateCharCount(elements);
-        showToast(elements, "Pasted into text box", "success");
+        showToast(elements, t("pastedToast"), "success");
       }
     }
   };
@@ -173,11 +174,11 @@ const renderHistory = (elements, historyService) => {
 // Connect to Room (main logic)
 // ---------------------------------------------------------------------------
 
-const connectToRoom = (elements, roomId, keyBase64) => {
+const connectToRoom = (elements, roomId, keyBase64, t) => {
   const firebaseService = createFirebaseService(FIREBASE_CONFIG);
   const historyService = createHistoryService();
   const cryptoService = createCryptoService();
-  const fileService = createFileService();
+  const fileService = createFileService(t);
   const sessionService = createSessionService();
 
   let encryptionKey = null;
@@ -187,7 +188,7 @@ const connectToRoom = (elements, roomId, keyBase64) => {
   sessionService.saveSession(roomId, keyBase64);
 
   // Update UI
-  setText(elements.connectionText, "Connected to room");
+  setText(elements.connectionText, t("connectedToRoom"));
   setText(elements.connectionRoomId, roomId);
   hide(elements.noRoomSection);
   show(elements.inputSection);
@@ -228,9 +229,9 @@ const connectToRoom = (elements, roomId, keyBase64) => {
   // --- Send text ---
   const handleSend = async () => {
     const text = elements.textInput.value.trim();
-    if (!text) { showToast(elements, "Enter some text first", "error"); return; }
+    if (!text) { showToast(elements, t("enterTextToast"), "error"); return; }
     if (text.length > MAX_TEXT_LENGTH) {
-      showToast(elements, `Max ${MAX_TEXT_LENGTH.toLocaleString()} characters`, "error");
+      showToast(elements, t("maxCharsToast", { max: MAX_TEXT_LENGTH.toLocaleString() }), "error");
       return;
     }
 
@@ -239,13 +240,13 @@ const connectToRoom = (elements, roomId, keyBase64) => {
       const payload = await encryptPayload({ text });
       await firebaseService.sendToRoom(roomId, payload);
       historyService.addItem(text, "sent");
-      renderHistory(elements, historyService);
-      showToast(elements, "Sent to computer!", "success");
+      renderHistory(elements, historyService, t);
+      showToast(elements, t("sentToComputerToast"), "success");
       elements.textInput.value = "";
       updateCharCount(elements);
     } catch (err) {
       console.error("[App] Send failed:", err);
-      showToast(elements, "Failed to send", "error");
+      showToast(elements, t("failedToSendToast"), "error");
     } finally {
       setSendLoading(elements, false);
     }
@@ -261,18 +262,18 @@ const connectToRoom = (elements, roomId, keyBase64) => {
     if (!file) return;
 
     show(elements.fileSending);
-    setText(elements.fileSendingText, `Sending ${file.name}...`);
+    setText(elements.fileSendingText, t("fileSending", { filename: file.name }));
 
     try {
       const processedFile = await fileService.processFile(file);
       const payload = await encryptPayload({ file: processedFile });
       await firebaseService.sendToRoom(roomId, payload);
       historyService.addItem(`📎 ${file.name}`, "sent");
-      renderHistory(elements, historyService);
-      showToast(elements, `${file.name} sent!`, "success");
+      renderHistory(elements, historyService, t);
+      showToast(elements, t("fileSentToast", { filename: file.name }), "success");
     } catch (err) {
       console.error("[App] File send failed:", err);
-      showToast(elements, err.message || "Failed to send file", "error");
+      showToast(elements, err.message || t("failedToSendToast"), "error");
     } finally {
       hide(elements.fileSending);
     }
@@ -297,7 +298,7 @@ const connectToRoom = (elements, roomId, keyBase64) => {
       if (!rawData) return;
 
       const data = await decryptPayload(rawData);
-      if (!data) { showToast(elements, "Decryption failed", "error"); return; }
+      if (!data) { showToast(elements, t("decryptFailedToast"), "error"); return; }
 
       if (data.text) {
         lastReceivedFromPC = data.text;
@@ -308,8 +309,8 @@ const connectToRoom = (elements, roomId, keyBase64) => {
         else { hide(elements.openLinkMobileBtn); }
 
         historyService.addItem(data.text, "received");
-        renderHistory(elements, historyService);
-        showToast(elements, "Received from computer!", "success");
+        renderHistory(elements, historyService, t);
+        showToast(elements, t("receivedFromPctoast"), "success");
       }
 
       try { await firebaseService.clearToMobile(roomId); } catch {}
@@ -323,11 +324,11 @@ const connectToRoom = (elements, roomId, keyBase64) => {
     if (!lastReceivedFromPC) return;
     try {
       await navigator.clipboard.writeText(lastReceivedFromPC);
-      showToast(elements, "Copied!", "success");
+      showToast(elements, t("copiedToast"), "success");
     } catch {
       elements.textInput.value = lastReceivedFromPC;
       updateCharCount(elements);
-      showToast(elements, "Pasted into text box", "success");
+      showToast(elements, t("pastedToast"), "success");
     }
   });
 
@@ -348,10 +349,10 @@ const connectToRoom = (elements, roomId, keyBase64) => {
 
   elements.historyClear.addEventListener("click", () => {
     historyService.clearHistory();
-    renderHistory(elements, historyService);
+    renderHistory(elements, historyService, t);
   });
 
-  renderHistory(elements, historyService);
+  renderHistory(elements, historyService, t);
   updateCharCount(elements);
   elements.textInput.focus();
 };
@@ -364,13 +365,17 @@ const initApp = () => {
   const elements = getElements();
   const urlService = createUrlService();
   const sessionService = createSessionService();
+  
+  const i18n = createI18nService();
+  i18n.initDom();
+  const t = i18n.t;
 
   const roomId = urlService.getRoomIdFromUrl();
   const keyBase64 = urlService.getEncryptionKeyFromUrl();
 
   // --- Room found in URL ---
   if (roomId) {
-    connectToRoom(elements, roomId, keyBase64);
+    connectToRoom(elements, roomId, keyBase64, t);
     return;
   }
 
@@ -384,14 +389,20 @@ const initApp = () => {
   const lastSession = sessionService.getLastSession();
   if (lastSession) {
     show(elements.reconnectBtn);
-    setText(elements.reconnectInfo,
-      `Room ${lastSession.roomId} · ${sessionService.getTimeAgo(lastSession.timestamp)}`
-    );
+    const timeAgoStr = sessionService.getTimeAgo(lastSession.timestamp);
+    // Use t() to render 'just now' or 'X min ago'
+    let timeLabel = t("justNow");
+    if (timeAgoStr !== "just now") {
+      const min = timeAgoStr.split(" ")[0];
+      timeLabel = t("minAgo", { min });
+    }
+    
+    setText(elements.reconnectInfo, t("reconnectInfoBase", { roomId: lastSession.roomId, timeAgo: timeLabel }));
 
     elements.reconnectBtn.addEventListener("click", () => {
       hide(elements.noRoomSection);
       removeClass(elements.connectionBar, "disconnected");
-      connectToRoom(elements, lastSession.roomId, lastSession.encryptionKey);
+      connectToRoom(elements, lastSession.roomId, lastSession.encryptionKey, t);
     });
   }
 };

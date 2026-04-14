@@ -20,7 +20,7 @@
         </div>
         <h1 class="logo-text">AirPaste</h1>
       </div>
-      <p class="tagline">Scan QR · Send Text · Done</p>
+      <p class="tagline" data-i18n="tagline">Scan QR · Send Text · Done</p>
     </header>
 
     <!-- Encryption Badge -->
@@ -29,14 +29,14 @@
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
         <path d="M7 11V7a5 5 0 0110 0v4"/>
       </svg>
-      <span>End-to-end encrypted</span>
+      <span data-i18n="e2eEncrypted">End-to-end encrypted</span>
     </div>
 
     <!-- QR Code Section -->
     <section class="qr-section">
       <div id="qr-container" class="qr-container"></div>
       <div class="room-info">
-        <span class="room-label">Room</span>
+        <span class="room-label" data-i18n="roomLabel">Room</span>
         <span id="room-id" class="room-id">----</span>
       </div>
     </section>
@@ -47,13 +47,13 @@
         <div class="pulse-ring"></div>
         <div class="pulse-dot"></div>
       </div>
-      <p id="status-text" class="status-text">Waiting for connection...</p>
+      <p id="status-text" class="status-text" data-i18n="waitingConnection">Waiting for connection...</p>
     </section>
 
     <!-- Received Text Preview -->
     <section id="received-section" class="received-section hidden">
       <div class="received-header">
-        <span class="received-label">Received</span>
+        <span class="received-label" data-i18n="receivedLabel">Received</span>
         <div class="received-actions">
           <button id="open-link-btn" class="action-btn open-link-btn hidden" title="Open in browser">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -61,7 +61,7 @@
               <polyline points="15 3 21 3 21 9"/>
               <line x1="10" y1="14" x2="21" y2="3"/>
             </svg>
-            <span>Open</span>
+            <span data-i18n="openLink">Open</span>
           </button>
           <button id="copy-again-btn" class="action-btn copy-again-btn" title="Copy again">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -77,14 +77,14 @@
     <!-- Received File Preview -->
     <section id="received-file-section" class="received-section hidden">
       <div class="received-header">
-        <span class="received-label">📎 File Received</span>
+        <span class="received-label" data-i18n="fileReceivedLabel">📎 File Received</span>
         <button id="download-file-btn" class="action-btn download-btn" title="Download file">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          <span>Download</span>
+          <span data-i18n="downloadBtn">Download</span>
         </button>
       </div>
       <div id="file-preview" class="file-preview">
@@ -100,11 +100,11 @@
     <!-- Send to Phone Section -->
     <section class="send-section">
       <div class="send-section-header">
-        <span class="send-section-label">Send to Phone</span>
+        <span class="send-section-label" data-i18n="sendSectionLabel">Send to Phone</span>
       </div>
       <div class="send-input-wrapper">
         <input id="send-to-mobile-input" class="send-to-mobile-input" type="text"
-          placeholder="Type text or paste a link..." maxlength="10000"/>
+          placeholder="Type text or paste a link..." data-i18n-placeholder="sendInputPlaceholder" maxlength="10000"/>
         <button id="send-to-mobile-btn" class="send-to-mobile-btn" title="Send to phone" disabled>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/>
@@ -121,7 +121,7 @@
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
-        <span>History</span>
+        <span data-i18n="historyBtn">History</span>
         <span id="history-count" class="history-count">0</span>
         <svg id="history-chevron" class="history-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"/>
@@ -134,9 +134,9 @@
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
           </svg>
-          <span>Clear All</span>
+          <span data-i18n="clearAll">Clear All</span>
         </button>
-        <p id="history-empty" class="history-empty">No history yet</p>
+        <p id="history-empty" class="history-empty" data-i18n="noHistory">No history yet</p>
       </div>
     </section>
 
@@ -147,7 +147,7 @@
           <path d="M23 4v6h-6M1 20v-6h6"/>
           <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
         </svg>
-        <span>New Room</span>
+        <span data-i18n="newRoomBtn">New Room</span>
       </button>
     </footer>
   </div>

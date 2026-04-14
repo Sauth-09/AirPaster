@@ -12,7 +12,7 @@ const IMAGE_QUALITY = 0.8;
  * Creates a File service instance.
  * @returns {Object} Frozen service interface
  */
-export const createFileService = () => {
+export const createFileService = (t) => {
   /**
    * Validate file size.
    * @param {File} file
@@ -20,11 +20,11 @@ export const createFileService = () => {
    */
   const validateFile = (file) => {
     if (!file) {
-      return { valid: false, message: "No file selected" };
+      return { valid: false, message: (t ? t("noFileSelected") : "No file selected") };
     }
     if (file.size > MAX_FILE_SIZE) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-      return { valid: false, message: `File too large (${sizeMB}MB). Max 2MB.` };
+      return { valid: false, message: (t ? t("fileTooLarge", { size: sizeMB }) : `File too large (${sizeMB}MB). Max 2MB.`) };
     }
     return { valid: true };
   };
@@ -105,7 +105,7 @@ export const createFileService = () => {
    */
   const processFile = async (file) => {
     if (!file) {
-      throw new Error("No file selected");
+      throw new Error(t ? t("noFileSelected") : "No file selected");
     }
 
     let data;
@@ -131,7 +131,8 @@ export const createFileService = () => {
     // Final safety check for the resulting data size
     if (size > MAX_FILE_SIZE) {
        const sizeMB = (size / (1024 * 1024)).toFixed(1);
-       throw new Error(`File is still too large (${sizeMB}MB) even after processing. Max 2MB.`);
+       const msg = t ? t("fileStillTooLarge", { size: sizeMB }) : `File is still too large (${sizeMB}MB) even after processing. Max 2MB.`;
+       throw new Error(msg);
     }
 
     return {
