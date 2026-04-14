@@ -16,11 +16,11 @@ jspm_packages/
 # We will use GitHub actions or build locally for release. 
 # We'll ignore OS files)
 
-# Build artifacts
-dist/
-build/
-mobile-web/dist/
-extension/dist/
+# Build artifacts Note: Not ignored so GitHub pages works
+# dist/
+# build/
+# mobile-web/dist/
+# extension/dist/
 
 # Env versions
 .env
@@ -40,4 +40,4 @@ Thumbs.db
 # Note: For chrome extensions, often the final built folder is what users load. 
 # We will ignore the generated dist/ folders to keep the repo clean.
 # Users will need to run 'npm run build' after cloning.
-firebase-config.js
+# firebase-config.js
