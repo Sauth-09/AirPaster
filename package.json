@@ -1,0 +1,21 @@
+{
+  "name": "airpaste",
+  "version": "1.0.0",
+  "description": "Cloud Clipboard — Instant text/link transfer between devices via Firebase",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:extension": "node esbuild.config.mjs extension",
+    "build:mobile": "node esbuild.config.mjs mobile",
+    "build:all": "node esbuild.config.mjs all",
+    "build": "node esbuild.config.mjs all",
+    "dev": "node esbuild.config.mjs all --watch"
+  },
+  "dependencies": {
+    "firebase": "^11.0.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

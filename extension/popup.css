@@ -1,0 +1,453 @@
+/* ===========================================================================
+   AirPaste — Extension Popup Styles
+   Premium dark theme with glassmorphism, smooth animations, and modern typography
+   =========================================================================== */
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Color Palette */
+  --bg-primary: #0f0f14;
+  --bg-secondary: #1a1a24;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(139, 92, 246, 0.3);
+
+  --text-primary: #f0f0f5;
+  --text-secondary: #9090a8;
+  --text-muted: #5c5c72;
+
+  --accent-purple: #8b5cf6;
+  --accent-purple-dim: rgba(139, 92, 246, 0.15);
+  --accent-green: #34d399;
+  --accent-green-dim: rgba(52, 211, 153, 0.15);
+  --accent-red: #f87171;
+  --accent-red-dim: rgba(248, 113, 113, 0.15);
+  --accent-blue: #60a5fa;
+
+  /* Typography */
+  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-lg: 15px;
+  --font-size-xl: 18px;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+}
+
+body {
+  width: 340px;
+  min-height: 420px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* --- Popup Container --- */
+.popup-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  position: relative;
+}
+
+/* Subtle gradient overlay */
+.popup-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: radial-gradient(
+    ellipse at 50% -20%,
+    rgba(139, 92, 246, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.popup-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Header --- */
+.header {
+  text-align: center;
+}
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.logo-icon {
+  color: var(--accent-purple);
+  display: flex;
+  align-items: center;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));
+}
+
+.logo-text {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tagline {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* --- QR Code Section --- */
+.qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.qr-container {
+  width: 210px;
+  height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xs);
+  transition: border-color var(--transition-base),
+              box-shadow var(--transition-base);
+  overflow: hidden;
+}
+
+.qr-container:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.08);
+}
+
+.qr-container canvas {
+  border-radius: var(--radius-sm);
+  image-rendering: pixelated;
+}
+
+.room-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+}
+
+.room-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.room-id {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--accent-purple);
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  letter-spacing: 1px;
+}
+
+/* --- Status Section --- */
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-base),
+              border-color var(--transition-base);
+}
+
+.status-waiting {
+  background: var(--accent-purple-dim);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.status-copied {
+  background: var(--accent-green-dim);
+  border: 1px solid rgba(52, 211, 153, 0.15);
+}
+
+.status-error {
+  background: var(--accent-red-dim);
+  border: 1px solid rgba(248, 113, 113, 0.15);
+}
+
+/* Pulse animation for waiting state */
+.status-icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-purple);
+  opacity: 0;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.status-copied .pulse-ring {
+  border-color: var(--accent-green);
+  animation: none;
+  opacity: 0;
+}
+
+.status-error .pulse-ring {
+  border-color: var(--accent-red);
+  animation: none;
+  opacity: 0;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-purple);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.status-copied .pulse-dot {
+  background: var(--accent-green);
+  animation: none;
+  width: 20px;
+  height: 20px;
+  /* Checkmark via box-shadow trick */
+  background: none;
+  border: none;
+}
+
+.status-copied .pulse-dot::after {
+  content: "✓";
+  font-size: 16px;
+  color: var(--accent-green);
+  font-weight: 700;
+}
+
+.status-error .pulse-dot {
+  background: var(--accent-red);
+  animation: none;
+  width: 20px;
+  height: 20px;
+  background: none;
+}
+
+.status-error .pulse-dot::after {
+  content: "✕";
+  font-size: 16px;
+  color: var(--accent-red);
+  font-weight: 700;
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.status-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.status-copied .status-text {
+  color: var(--accent-green);
+}
+
+.status-error .status-text {
+  color: var(--accent-red);
+}
+
+/* --- Received Text Section --- */
+.received-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  animation: slide-up 300ms ease;
+}
+
+.received-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.received-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.copy-again-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--bg-card-hover);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.copy-again-btn:hover {
+  background: var(--accent-purple-dim);
+  color: var(--accent-purple);
+}
+
+.received-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  word-break: break-all;
+  max-height: 80px;
+  overflow-y: auto;
+  line-height: 1.5;
+  padding: var(--space-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+}
+
+/* Custom scrollbar */
+.received-text::-webkit-scrollbar {
+  width: 4px;
+}
+.received-text::-webkit-scrollbar-track {
+  background: transparent;
+}
+.received-text::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 2px;
+}
+
+/* --- Footer --- */
+.footer {
+  display: flex;
+  justify-content: center;
+}
+
+.new-room-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.new-room-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  color: var(--accent-purple);
+}
+
+.new-room-btn:active {
+  transform: scale(0.97);
+}
+
+/* --- Utility Classes --- */
+.hidden {
+  display: none !important;
+}
+
+/* --- Animations --- */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

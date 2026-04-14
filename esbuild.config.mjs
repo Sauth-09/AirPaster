@@ -1,0 +1,71 @@
+import { build, context } from "esbuild";
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+const SHARED_OPTIONS = {
+  bundle: true,
+  minify: true,
+  sourcemap: false,
+  target: ["chrome110"],
+  charset: "utf8",
+  logLevel: "info",
+};
+
+const EXTENSION_CONFIG = {
+  ...SHARED_OPTIONS,
+  entryPoints: ["extension/src/popup.js"],
+  outfile: "extension/dist/popup.bundle.js",
+  format: "iife", // Manifest V3 requires IIFE (no ES modules in popup)
+};
+
+const MOBILE_CONFIG = {
+  ...SHARED_OPTIONS,
+  entryPoints: ["mobile-web/src/app.js"],
+  outfile: "mobile-web/dist/app.bundle.js",
+  format: "iife",
+};
+
+// ---------------------------------------------------------------------------
+// CLI Handling
+// ---------------------------------------------------------------------------
+
+const args = process.argv.slice(2);
+const target = args[0] || "all";
+const isWatch = args.includes("--watch");
+
+const configs = {
+  extension: [EXTENSION_CONFIG],
+  mobile: [MOBILE_CONFIG],
+  all: [EXTENSION_CONFIG, MOBILE_CONFIG],
+};
+
+const selectedConfigs = configs[target];
+
+if (!selectedConfigs) {
+  console.error(`Unknown target: "${target}". Use: extension | mobile | all`);
+  process.exit(1);
+}
+
+// ---------------------------------------------------------------------------
+// Build or Watch
+// ---------------------------------------------------------------------------
+
+const run = async () => {
+  if (isWatch) {
+    console.log("👀 Watching for changes...\n");
+    const contexts = await Promise.all(
+      selectedConfigs.map((cfg) => context(cfg))
+    );
+    await Promise.all(contexts.map((ctx) => ctx.watch()));
+  } else {
+    await Promise.all(selectedConfigs.map((cfg) => build(cfg)));
+    console.log("\n✅ Build completed successfully!");
+  }
+};
+
+run().catch((err) => {
+  console.error("❌ Build failed:", err);
+  process.exit(1);
+});

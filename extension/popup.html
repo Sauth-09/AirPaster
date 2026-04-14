@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AirPaste</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-wrapper">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 11v6M9 14l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="logo-text">AirPaste</h1>
+      </div>
+      <p class="tagline">Scan QR · Send Text · Done</p>
+    </header>
+
+    <!-- QR Code Section -->
+    <section class="qr-section">
+      <div id="qr-container" class="qr-container">
+        <!-- QR code canvas will be rendered here -->
+      </div>
+      <div class="room-info">
+        <span class="room-label">Room</span>
+        <span id="room-id" class="room-id">----</span>
+      </div>
+    </section>
+
+    <!-- Status Section -->
+    <section id="status-section" class="status-section status-waiting">
+      <div class="status-icon" id="status-icon">
+        <div class="pulse-ring"></div>
+        <div class="pulse-dot"></div>
+      </div>
+      <p id="status-text" class="status-text">Waiting for connection...</p>
+    </section>
+
+    <!-- Received Text Preview -->
+    <section id="received-section" class="received-section hidden">
+      <div class="received-header">
+        <span class="received-label">Received</span>
+        <button id="copy-again-btn" class="copy-again-btn" title="Copy again">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+        </button>
+      </div>
+      <p id="received-text" class="received-text"></p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <button id="new-room-btn" class="new-room-btn" title="Generate new room">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+        <span>New Room</span>
+      </button>
+    </footer>
+  </div>
+
+  <script src="dist/popup.bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Mobile web public / dist (if you generate files, only keep src in tracking and not dist, BUT wait,
+# If you are delivering the final extension via dist, sometimes people commit dist for chrome extensions.
+# I will ignore local dev builds but will be careful. It is usually best to ignore dist and only push src.
+# We will use GitHub actions or build locally for release. 
+# We'll ignore OS files)
+
+# Build artifacts
+dist/
+build/
+mobile-web/dist/
+extension/dist/
+
+# Env versions
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Optional REPL history
+.node_repl_history
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Private config files (like firebase config if it has keys, but for client side it often is public. Still good to abstract if possible)
+# Note: For chrome extensions, often the final built folder is what users load. 
+# We will ignore the generated dist/ folders to keep the repo clean.
+# Users will need to run 'npm run build' after cloning.
+firebase-config.js
