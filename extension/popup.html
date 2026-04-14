@@ -47,14 +47,74 @@
     <section id="received-section" class="received-section hidden">
       <div class="received-header">
         <span class="received-label">Received</span>
-        <button id="copy-again-btn" class="copy-again-btn" title="Copy again">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2"/>
-            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+        <div class="received-actions">
+          <button id="open-link-btn" class="action-btn open-link-btn hidden" title="Open in browser">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            <span>Open</span>
+          </button>
+          <button id="copy-again-btn" class="action-btn copy-again-btn" title="Copy again">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <p id="received-text" class="received-text"></p>
+    </section>
+
+    <!-- Send to Phone Section -->
+    <section class="send-section">
+      <div class="send-section-header">
+        <span class="send-section-label">Send to Phone</span>
+      </div>
+      <div class="send-input-wrapper">
+        <input
+          id="send-to-mobile-input"
+          class="send-to-mobile-input"
+          type="text"
+          placeholder="Type text or paste a link..."
+          maxlength="10000"
+        />
+        <button id="send-to-mobile-btn" class="send-to-mobile-btn" title="Send to phone" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
-      <p id="received-text" class="received-text"></p>
+    </section>
+
+    <!-- History Section -->
+    <section class="history-section">
+      <button id="history-toggle-btn" class="history-toggle-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>History</span>
+        <span id="history-count" class="history-count">0</span>
+        <svg id="history-chevron" class="history-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <div id="history-panel" class="history-panel hidden">
+        <div id="history-list" class="history-list">
+          <!-- History items rendered here -->
+        </div>
+        <button id="history-clear-btn" class="history-clear-btn hidden">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+          </svg>
+          <span>Clear All</span>
+        </button>
+        <p id="history-empty" class="history-empty">No history yet</p>
+      </div>
     </section>
 
     <!-- Footer -->

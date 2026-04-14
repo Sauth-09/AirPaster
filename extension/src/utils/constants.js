@@ -29,6 +29,15 @@ export const QR_OPTIONS = {
 /** Status message display duration (ms) */
 export const STATUS_DISPLAY_DURATION = 3000;
 
+/** URL detection regex */
+export const URL_REGEX = /^https?:\/\/[^\s]+$/i;
+
+/** Maximum number of history items to store */
+export const MAX_HISTORY_ITEMS = 10;
+
+/** LocalStorage key for history */
+export const HISTORY_STORAGE_KEY = "airpaste_history";
+
 /** UI Status types */
 export const STATUS = Object.freeze({
   IDLE: "idle",

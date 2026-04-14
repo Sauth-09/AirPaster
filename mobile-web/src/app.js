@@ -1,15 +1,16 @@
 // ---------------------------------------------------------------------------
 // Mobile Web Entry Point — App Controller
 // ---------------------------------------------------------------------------
-// Orchestrates URL parsing, Firebase sending, and UI state management.
+// Orchestrates URL parsing, Firebase sending/receiving, history, and UI state.
 // No business logic in the UI layer.
 // ---------------------------------------------------------------------------
 
 import { FIREBASE_CONFIG } from "./config/firebase-config.js";
-import { STATUS, MAX_TEXT_LENGTH, STATUS_DISPLAY_DURATION } from "./utils/constants.js";
+import { STATUS, MAX_TEXT_LENGTH, STATUS_DISPLAY_DURATION, URL_REGEX } from "./utils/constants.js";
 
 import { createFirebaseService } from "./services/firebase-service.js";
 import { createUrlService } from "./services/url-service.js";
+import { createHistoryService } from "./services/history-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM Helpers (inline for mobile — keeps bundle small)
@@ -38,6 +39,29 @@ const removeClass = (el, ...cls) => {
 };
 
 // ---------------------------------------------------------------------------
+// Utility
+// ---------------------------------------------------------------------------
+
+const isUrl = (text) => URL_REGEX.test(text.trim());
+
+const escapeHtml = (text) =>
+  text.replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  if (isToday) {
+    return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  }
+  return date.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" });
+};
+
+// ---------------------------------------------------------------------------
 // DOM Element References
 // ---------------------------------------------------------------------------
 
@@ -56,6 +80,18 @@ const getElements = () => ({
   toast: $("#toast"),
   toastIcon: $("#toast-icon"),
   toastText: $("#toast-text"),
+  // Received from PC
+  receivedFromPC: $("#received-from-pc"),
+  receivedFromPCText: $("#received-from-pc-text"),
+  openLinkMobileBtn: $("#open-link-mobile-btn"),
+  copyReceivedBtn: $("#copy-received-btn"),
+  // History
+  historyToggle: $("#history-toggle-mobile"),
+  historyCount: $("#history-count-mobile"),
+  historyPanel: $("#history-panel-mobile"),
+  historyList: $("#history-list-mobile"),
+  historyClear: $("#history-clear-mobile"),
+  historyEmpty: $("#history-empty-mobile"),
 });
 
 // ---------------------------------------------------------------------------
@@ -64,32 +100,20 @@ const getElements = () => ({
 
 let toastTimer = null;
 
-/**
- * Show a toast notification.
- * @param {Object} elements
- * @param {string} message
- * @param {"success"|"error"} type
- */
 const showToast = (elements, message, type = "success") => {
   const { toast, toastIcon, toastText } = elements;
 
-  // Clear previous timer
   if (toastTimer) clearTimeout(toastTimer);
 
-  // Remove old type classes
   removeClass(toast, "toast-success", "toast-error", "hidden");
-
-  // Set type
   addClass(toast, `toast-${type}`);
   setText(toastIcon, type === "success" ? "✓" : "✕");
   setText(toastText, message);
 
-  // Show with animation
   requestAnimationFrame(() => {
     addClass(toast, "visible");
   });
 
-  // Auto-hide
   toastTimer = setTimeout(() => {
     removeClass(toast, "visible");
     setTimeout(() => {
@@ -102,11 +126,6 @@ const showToast = (elements, message, type = "success") => {
 // Send Button State Management
 // ---------------------------------------------------------------------------
 
-/**
- * Set the send button to loading state.
- * @param {Object} elements
- * @param {boolean} loading
- */
 const setSendLoading = (elements, loading) => {
   const { sendBtn, sendBtnContent, sendBtnLoader } = elements;
 
@@ -126,18 +145,65 @@ const setSendLoading = (elements, loading) => {
 // Character Count
 // ---------------------------------------------------------------------------
 
-/**
- * Update the character count display.
- * @param {Object} elements
- */
 const updateCharCount = (elements) => {
   const count = elements.textInput.value.length;
   const formatted = count.toLocaleString();
   const max = MAX_TEXT_LENGTH.toLocaleString();
   setText(elements.charCount, `${formatted} / ${max}`);
-
-  // Update send button state
   elements.sendBtn.disabled = count === 0;
+};
+
+// ---------------------------------------------------------------------------
+// History Rendering (Mobile)
+// ---------------------------------------------------------------------------
+
+const renderHistory = (elements, historyService) => {
+  const items = historyService.getItems();
+  const { historyList, historyClear, historyEmpty, historyCount } = elements;
+
+  setText(historyCount, String(items.length));
+
+  if (items.length === 0) {
+    historyList.innerHTML = "";
+    hide(historyClear);
+    show(historyEmpty);
+    return;
+  }
+
+  hide(historyEmpty);
+  show(historyClear);
+
+  historyList.innerHTML = items.map((item, index) => {
+    const icon = item.direction === "sent" ? "📤" : "📥";
+    const time = formatTime(item.timestamp);
+    return `
+      <div class="history-item-mobile" data-index="${index}">
+        <span class="history-item-mobile-icon">${icon}</span>
+        <span class="history-item-mobile-text">${escapeHtml(item.text)}</span>
+        <span class="history-item-mobile-time">${time}</span>
+      </div>
+    `;
+  }).join("");
+
+  // Click to copy (event delegation)
+  historyList.onclick = async (e) => {
+    const itemEl = e.target.closest(".history-item-mobile");
+    if (!itemEl) return;
+
+    const index = parseInt(itemEl.dataset.index, 10);
+    const item = items[index];
+    if (item) {
+      try {
+        await navigator.clipboard.writeText(item.fullText);
+        showToast(elements, "Copied!", "success");
+      } catch (err) {
+        // Fallback: put in textarea
+        elements.textInput.value = item.fullText;
+        updateCharCount(elements);
+        showToast(elements, "Pasted into text box", "success");
+      }
+    }
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -161,8 +227,12 @@ const initApp = () => {
     return;
   }
 
-  // --- Room found: setup sender ---
+  // --- Room found: setup sender + receiver ---
   const firebaseService = createFirebaseService(FIREBASE_CONFIG);
+  const historyService = createHistoryService();
+
+  // Track last received text for copy/open
+  let lastReceivedFromPC = "";
 
   // Update connection bar
   setText(elements.connectionText, "Connected to room");
@@ -177,7 +247,7 @@ const initApp = () => {
     updateCharCount(elements);
   });
 
-  // --- Send handler ---
+  // --- Send to PC handler ---
   const handleSend = async () => {
     const text = elements.textInput.value.trim();
 
@@ -196,7 +266,10 @@ const initApp = () => {
     try {
       await firebaseService.sendToRoom(roomId, text);
 
-      // Success!
+      // Add to history
+      historyService.addItem(text, "sent");
+      renderHistory(elements, historyService);
+
       showToast(elements, "Sent to your computer!", "success");
       elements.textInput.value = "";
       updateCharCount(elements);
@@ -219,10 +292,84 @@ const initApp = () => {
     }
   });
 
-  // Initial char count
-  updateCharCount(elements);
+  // --- Listen for data from PC (toMobile) ---
+  firebaseService.listenToRoom(roomId, async (text, error) => {
+    if (error) {
+      console.error("[App] Listen error:", error);
+      return;
+    }
 
-  // Focus the textarea
+    if (text) {
+      lastReceivedFromPC = text;
+
+      // Show received section
+      setText(elements.receivedFromPCText, text);
+      show(elements.receivedFromPC);
+
+      // Show/hide open link button
+      if (isUrl(text)) {
+        show(elements.openLinkMobileBtn);
+      } else {
+        hide(elements.openLinkMobileBtn);
+      }
+
+      // Add to history
+      historyService.addItem(text, "received");
+      renderHistory(elements, historyService);
+
+      // Show toast
+      showToast(elements, "Received from computer!", "success");
+
+      // Clear from Firebase
+      try {
+        await firebaseService.clearToMobile(roomId);
+      } catch (clearError) {
+        console.warn("[App] Failed to clear toMobile:", clearError);
+      }
+    }
+  });
+
+  // --- Copy received text ---
+  elements.copyReceivedBtn.addEventListener("click", async () => {
+    if (!lastReceivedFromPC) return;
+    try {
+      await navigator.clipboard.writeText(lastReceivedFromPC);
+      showToast(elements, "Copied!", "success");
+    } catch (err) {
+      // Fallback: put in textarea
+      elements.textInput.value = lastReceivedFromPC;
+      updateCharCount(elements);
+      showToast(elements, "Pasted into text box", "success");
+    }
+  });
+
+  // --- Open link from PC ---
+  elements.openLinkMobileBtn.addEventListener("click", () => {
+    if (lastReceivedFromPC && isUrl(lastReceivedFromPC)) {
+      window.open(lastReceivedFromPC, "_blank");
+    }
+  });
+
+  // --- History toggle ---
+  let historyOpen = false;
+  elements.historyToggle.addEventListener("click", () => {
+    historyOpen = !historyOpen;
+    if (historyOpen) {
+      show(elements.historyPanel);
+    } else {
+      hide(elements.historyPanel);
+    }
+  });
+
+  // --- History clear ---
+  elements.historyClear.addEventListener("click", () => {
+    historyService.clearHistory();
+    renderHistory(elements, historyService);
+  });
+
+  // --- Initial renders ---
+  renderHistory(elements, historyService);
+  updateCharCount(elements);
   elements.textInput.focus();
 };
 

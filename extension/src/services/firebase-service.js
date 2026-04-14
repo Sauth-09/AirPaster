@@ -1,25 +1,18 @@
 // ---------------------------------------------------------------------------
-// Firebase Service — Extension (Receiver)
+// Firebase Service — Extension (Receiver + Sender)
 // ---------------------------------------------------------------------------
-// Factory function that creates a Firebase service with dependency injection.
-// Handles: initialization, real-time listening, room cleanup.
+// Handles: initialization, real-time listening on toPC, sending to toMobile,
+// and room cleanup.
 // ---------------------------------------------------------------------------
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, remove, off } from "firebase/database";
+import { getDatabase, ref, onValue, set, remove, off } from "firebase/database";
 import { DB_ROOMS_PATH } from "../utils/constants.js";
 
 /**
- * @typedef {Object} FirebaseService
- * @property {(roomId: string, callback: Function) => Function} listenToRoom
- * @property {(roomId: string) => Promise<void>} clearRoom
- * @property {() => void} dispose
- */
-
-/**
- * Creates a Firebase service instance.
+ * Creates a Firebase service instance for the extension.
  * @param {Object} config - Firebase configuration object
- * @returns {FirebaseService}
+ * @returns {Object} Frozen service interface
  */
 export const createFirebaseService = (config) => {
   const app = initializeApp(config);
@@ -29,10 +22,9 @@ export const createFirebaseService = (config) => {
   let activeUnsubscribe = null;
 
   /**
-   * Listen to a room for incoming data.
-   * Calls the callback with the text value whenever the room data changes.
+   * Listen to a room for incoming data from mobile (toPC path).
    * @param {string} roomId
-   * @param {(text: string|null) => void} callback
+   * @param {(text: string|null, error?: Error) => void} callback
    * @returns {Function} Unsubscribe function
    */
   const listenToRoom = (roomId, callback) => {
@@ -41,10 +33,10 @@ export const createFirebaseService = (config) => {
       activeUnsubscribe();
     }
 
-    const roomRef = ref(db, `${DB_ROOMS_PATH}/${roomId}`);
+    const toPCRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toPC`);
 
     const unsubscribe = onValue(
-      roomRef,
+      toPCRef,
       (snapshot) => {
         const data = snapshot.val();
         if (data && data.text) {
@@ -58,7 +50,7 @@ export const createFirebaseService = (config) => {
     );
 
     activeUnsubscribe = () => {
-      off(roomRef);
+      off(toPCRef);
       activeUnsubscribe = null;
     };
 
@@ -66,14 +58,37 @@ export const createFirebaseService = (config) => {
   };
 
   /**
-   * Clear/delete a room after data has been received and processed.
+   * Send text from the extension to the mobile device (toMobile path).
+   * @param {string} roomId
+   * @param {string} text
+   * @returns {Promise<void>}
+   */
+  const sendToMobile = async (roomId, text) => {
+    if (!roomId || !text || text.trim().length === 0) {
+      throw new Error("[FirebaseService] Room ID and text are required");
+    }
+
+    try {
+      const toMobileRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toMobile`);
+      await set(toMobileRef, {
+        text: text.trim(),
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error(`[FirebaseService] Send to mobile error for room ${roomId}:`, error);
+      throw error;
+    }
+  };
+
+  /**
+   * Clear the toPC data after it has been received and processed.
    * @param {string} roomId
    * @returns {Promise<void>}
    */
   const clearRoom = async (roomId) => {
     try {
-      const roomRef = ref(db, `${DB_ROOMS_PATH}/${roomId}`);
-      await remove(roomRef);
+      const toPCRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toPC`);
+      await remove(toPCRef);
     } catch (error) {
       console.error(`[FirebaseService] Clear room error for ${roomId}:`, error);
       throw error;
@@ -89,5 +104,5 @@ export const createFirebaseService = (config) => {
     }
   };
 
-  return Object.freeze({ listenToRoom, clearRoom, dispose });
+  return Object.freeze({ listenToRoom, sendToMobile, clearRoom, dispose });
 };

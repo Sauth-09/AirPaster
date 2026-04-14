@@ -83,6 +83,36 @@
             <div class="spinner"></div>
           </div>
         </button>
+
+        <!-- Received from Computer Section -->
+        <div id="received-from-pc" class="received-from-pc hidden">
+          <div class="received-from-pc-header">
+            <span class="received-from-pc-label">📥 Received from Computer</span>
+            <div class="received-from-pc-actions">
+              <button id="open-link-mobile-btn" class="mobile-action-btn open-link-mobile-btn hidden" title="Open link">
+                🔗 Open
+              </button>
+              <button id="copy-received-btn" class="mobile-action-btn" title="Copy">
+                📋 Copy
+              </button>
+            </div>
+          </div>
+          <p id="received-from-pc-text" class="received-from-pc-text"></p>
+        </div>
+
+        <!-- History Section -->
+        <div class="history-section-mobile">
+          <button id="history-toggle-mobile" class="history-toggle-mobile">
+            <span>📜 History</span>
+            <span id="history-count-mobile" class="history-count-mobile">0</span>
+          </button>
+          <div id="history-panel-mobile" class="history-panel-mobile hidden">
+            <div id="history-list-mobile" class="history-list-mobile">
+            </div>
+            <button id="history-clear-mobile" class="history-clear-mobile hidden">🗑️ Clear All</button>
+            <p id="history-empty-mobile" class="history-empty-mobile">No history yet</p>
+          </div>
+        </div>
       </div>
     </main>
 

@@ -1,29 +1,27 @@
 // ---------------------------------------------------------------------------
-// Firebase Service — Mobile Web (Sender)
+// Firebase Service — Mobile Web (Sender + Receiver)
 // ---------------------------------------------------------------------------
-// Factory function that creates a Firebase service for sending data.
+// Handles: sending data to PC, listening for data from PC, cleanup.
 // ---------------------------------------------------------------------------
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, serverTimestamp } from "firebase/database";
+import { getDatabase, ref, set, onValue, remove, off } from "firebase/database";
 import { DB_ROOMS_PATH } from "../utils/constants.js";
 
 /**
- * @typedef {Object} MobileFirebaseService
- * @property {(roomId: string, text: string) => Promise<void>} sendToRoom
- */
-
-/**
- * Creates a Firebase service instance for the mobile web sender.
+ * Creates a Firebase service instance for the mobile web.
  * @param {Object} config - Firebase configuration object
- * @returns {MobileFirebaseService}
+ * @returns {Object} Frozen service interface
  */
 export const createFirebaseService = (config) => {
   const app = initializeApp(config);
   const db = getDatabase(app);
 
+  // Track active listener for cleanup
+  let activeUnsubscribe = null;
+
   /**
-   * Send text data to a specific room.
+   * Send text data from mobile to the PC (toPC path).
    * @param {string} roomId
    * @param {string} text
    * @returns {Promise<void>}
@@ -37,8 +35,8 @@ export const createFirebaseService = (config) => {
     }
 
     try {
-      const roomRef = ref(db, `${DB_ROOMS_PATH}/${roomId}`);
-      await set(roomRef, {
+      const toPCRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toPC`);
+      await set(toPCRef, {
         text: text.trim(),
         timestamp: Date.now(),
       });
@@ -48,5 +46,64 @@ export const createFirebaseService = (config) => {
     }
   };
 
-  return Object.freeze({ sendToRoom });
+  /**
+   * Listen to a room for incoming data from the PC (toMobile path).
+   * @param {string} roomId
+   * @param {(text: string|null, error?: Error) => void} callback
+   * @returns {Function} Unsubscribe function
+   */
+  const listenToRoom = (roomId, callback) => {
+    if (activeUnsubscribe) {
+      activeUnsubscribe();
+    }
+
+    const toMobileRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toMobile`);
+
+    const unsubscribe = onValue(
+      toMobileRef,
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.text) {
+          callback(data.text);
+        }
+      },
+      (error) => {
+        console.error(`[FirebaseService] Listen error for room ${roomId}:`, error);
+        callback(null, error);
+      }
+    );
+
+    activeUnsubscribe = () => {
+      off(toMobileRef);
+      activeUnsubscribe = null;
+    };
+
+    return activeUnsubscribe;
+  };
+
+  /**
+   * Clear the toMobile data after it has been received.
+   * @param {string} roomId
+   * @returns {Promise<void>}
+   */
+  const clearToMobile = async (roomId) => {
+    try {
+      const toMobileRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toMobile`);
+      await remove(toMobileRef);
+    } catch (error) {
+      console.error(`[FirebaseService] Clear toMobile error for ${roomId}:`, error);
+      throw error;
+    }
+  };
+
+  /**
+   * Dispose all active listeners.
+   */
+  const dispose = () => {
+    if (activeUnsubscribe) {
+      activeUnsubscribe();
+    }
+  };
+
+  return Object.freeze({ sendToRoom, listenToRoom, clearToMobile, dispose });
 };
