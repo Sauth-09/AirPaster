@@ -4,16 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0f0f14">
-  <meta name="description" content="AirPaste — Send text from your phone to your computer instantly.">
+  <meta name="description" content="AirPaste — Send text and files from your phone to your computer instantly.">
   <title>AirPaste — Cloud Clipboard</title>
   <link rel="stylesheet" href="styles.css">
-
-  <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
 </head>
 <body>
   <div class="app-container">
-    <!-- Ambient background blobs -->
     <div class="ambient-bg">
       <div class="blob blob-1"></div>
       <div class="blob blob-2"></div>
@@ -34,6 +31,11 @@
       <p class="tagline">Send text to your computer</p>
     </header>
 
+    <!-- Encryption Badge -->
+    <div id="encryption-badge" class="encryption-badge hidden">
+      <span>🔒 End-to-end encrypted</span>
+    </div>
+
     <!-- Connection Status -->
     <div id="connection-bar" class="connection-bar">
       <div class="connection-dot"></div>
@@ -43,7 +45,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      <!-- No Room Warning -->
+      <!-- No Room Warning (+ Reconnect) -->
       <div id="no-room-section" class="no-room-section hidden">
         <div class="no-room-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -54,19 +56,21 @@
         </div>
         <h2 class="no-room-title">No Room Connected</h2>
         <p class="no-room-desc">Scan the QR code from the AirPaste extension on your computer to connect.</p>
+
+        <!-- Reconnect button -->
+        <button id="reconnect-btn" class="reconnect-btn hidden">
+          <span>🔄 Reconnect to last room</span>
+          <span id="reconnect-info" class="reconnect-info"></span>
+        </button>
       </div>
 
       <!-- Text Input Section -->
       <div id="input-section" class="input-section hidden">
         <label for="text-input" class="input-label">Your text or link</label>
         <div class="textarea-wrapper">
-          <textarea
-            id="text-input"
-            class="text-input"
+          <textarea id="text-input" class="text-input"
             placeholder="Paste or type anything here..."
-            rows="6"
-            maxlength="10000"
-          ></textarea>
+            rows="5" maxlength="10000"></textarea>
           <span id="char-count" class="char-count">0 / 10,000</span>
         </div>
 
@@ -84,31 +88,44 @@
           </div>
         </button>
 
-        <!-- Received from Computer Section -->
+        <!-- File Buttons -->
+        <div class="file-buttons">
+          <label class="file-btn" id="photo-btn-label">
+            <input type="file" id="photo-input" accept="image/*" capture="environment" hidden/>
+            <span>📸 Photo</span>
+          </label>
+          <label class="file-btn" id="file-btn-label">
+            <input type="file" id="file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" hidden/>
+            <span>📁 File</span>
+          </label>
+        </div>
+
+        <!-- File sending progress -->
+        <div id="file-sending" class="file-sending hidden">
+          <div class="spinner-small"></div>
+          <span id="file-sending-text">Sending file...</span>
+        </div>
+
+        <!-- Received from Computer -->
         <div id="received-from-pc" class="received-from-pc hidden">
           <div class="received-from-pc-header">
-            <span class="received-from-pc-label">📥 Received from Computer</span>
+            <span class="received-from-pc-label">📥 From Computer</span>
             <div class="received-from-pc-actions">
-              <button id="open-link-mobile-btn" class="mobile-action-btn open-link-mobile-btn hidden" title="Open link">
-                🔗 Open
-              </button>
-              <button id="copy-received-btn" class="mobile-action-btn" title="Copy">
-                📋 Copy
-              </button>
+              <button id="open-link-mobile-btn" class="mobile-action-btn hidden">🔗 Open</button>
+              <button id="copy-received-btn" class="mobile-action-btn">📋 Copy</button>
             </div>
           </div>
           <p id="received-from-pc-text" class="received-from-pc-text"></p>
         </div>
 
-        <!-- History Section -->
+        <!-- History -->
         <div class="history-section-mobile">
           <button id="history-toggle-mobile" class="history-toggle-mobile">
             <span>📜 History</span>
             <span id="history-count-mobile" class="history-count-mobile">0</span>
           </button>
           <div id="history-panel-mobile" class="history-panel-mobile hidden">
-            <div id="history-list-mobile" class="history-list-mobile">
-            </div>
+            <div id="history-list-mobile" class="history-list-mobile"></div>
             <button id="history-clear-mobile" class="history-clear-mobile hidden">🗑️ Clear All</button>
             <p id="history-empty-mobile" class="history-empty-mobile">No history yet</p>
           </div>
@@ -116,13 +133,12 @@
       </div>
     </main>
 
-    <!-- Status Toast -->
+    <!-- Toast -->
     <div id="toast" class="toast hidden">
       <span id="toast-icon" class="toast-icon">✓</span>
       <span id="toast-text" class="toast-text">Sent successfully!</span>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
       <p>AirPaste &mdash; Cloud Clipboard</p>
     </footer>

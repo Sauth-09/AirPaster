@@ -1,7 +1,5 @@
 // ---------------------------------------------------------------------------
-// Room Service — Room ID Generation & URL Building
-// ---------------------------------------------------------------------------
-// Pure functions for room ID management. No side effects.
+// Room Service — Room ID Generation, URL Building, Encryption Key
 // ---------------------------------------------------------------------------
 
 import {
@@ -10,17 +8,6 @@ import {
   MOBILE_WEB_BASE_URL,
 } from "../utils/constants.js";
 
-/**
- * @typedef {Object} RoomService
- * @property {() => string} generateRoomId
- * @property {(roomId: string) => string} buildMobileUrl
- */
-
-/**
- * Generate a random numeric string of given length.
- * @param {number} length
- * @returns {string}
- */
 const randomDigits = (length) =>
   Array.from({ length }, () => Math.floor(Math.random() * 10)).join("");
 
@@ -28,7 +15,7 @@ const randomDigits = (length) =>
  * Creates a Room service instance.
  * @param {Object} [options]
  * @param {string} [options.baseUrl] - Override the default mobile web base URL
- * @returns {RoomService}
+ * @returns {Object} Frozen service interface
  */
 export const createRoomService = (options = {}) => {
   const baseUrl = options.baseUrl || MOBILE_WEB_BASE_URL;
@@ -44,14 +31,22 @@ export const createRoomService = (options = {}) => {
   };
 
   /**
-   * Build the full mobile web URL with the room ID as a query parameter.
+   * Build the full mobile web URL with room ID and optional encryption key.
+   * The encryption key is placed in the URL hash fragment so it never
+   * reaches the server.
    * @param {string} roomId
+   * @param {string} [encryptionKey] - URL-safe base64 encoded key
    * @returns {string}
    */
-  const buildMobileUrl = (roomId) => {
+  const buildMobileUrl = (roomId, encryptionKey = null) => {
     const url = new URL(baseUrl);
     url.searchParams.set("room", roomId);
-    return url.toString();
+
+    let fullUrl = url.toString();
+    if (encryptionKey) {
+      fullUrl += `#key=${encryptionKey}`;
+    }
+    return fullUrl;
   };
 
   return Object.freeze({ generateRoomId, buildMobileUrl });

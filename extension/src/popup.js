@@ -1,8 +1,7 @@
 // ---------------------------------------------------------------------------
 // Popup Entry Point — Extension UI Controller
 // ---------------------------------------------------------------------------
-// Orchestrates all services via dependency injection.
-// No business logic here — only UI coordination.
+// Orchestrates services: Firebase, QR, clipboard, crypto, history.
 // ---------------------------------------------------------------------------
 
 import { FIREBASE_CONFIG } from "./config/firebase-config.js";
@@ -14,9 +13,10 @@ import { createRoomService } from "./services/room-service.js";
 import { createQRService } from "./services/qr-service.js";
 import { createClipboardService } from "./services/clipboard-service.js";
 import { createHistoryService } from "./services/history-service.js";
+import { createCryptoService } from "./services/crypto-service.js";
 
 // ---------------------------------------------------------------------------
-// DOM Element References
+// DOM References
 // ---------------------------------------------------------------------------
 
 const getElements = () => ({
@@ -29,6 +29,13 @@ const getElements = () => ({
   copyAgainBtn: $("#copy-again-btn"),
   openLinkBtn: $("#open-link-btn"),
   newRoomBtn: $("#new-room-btn"),
+  // File
+  receivedFileSection: $("#received-file-section"),
+  downloadFileBtn: $("#download-file-btn"),
+  fileIcon: $("#file-icon"),
+  fileName: $("#file-name"),
+  fileSize: $("#file-size"),
+  imagePreview: $("#image-preview"),
   // Send to mobile
   sendToMobileInput: $("#send-to-mobile-input"),
   sendToMobileBtn: $("#send-to-mobile-btn"),
@@ -43,54 +50,50 @@ const getElements = () => ({
 });
 
 // ---------------------------------------------------------------------------
-// Utility: Check if text is a URL
+// Helpers
 // ---------------------------------------------------------------------------
 
 const isUrl = (text) => URL_REGEX.test(text.trim());
 
-// ---------------------------------------------------------------------------
-// Utility: Format timestamp for history
-// ---------------------------------------------------------------------------
-
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
+const formatTime = (ts) => {
+  const d = new Date(ts);
   const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-
-  if (isToday) {
-    return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   }
-  return date.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" });
+  return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" });
+};
+
+const formatBytes = (bytes) => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+};
+
+const escapeHtml = (t) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const getFileIcon = (type) => {
+  if (type.startsWith("image/")) return "🖼️";
+  if (type === "application/pdf") return "📄";
+  if (type.includes("word") || type.includes("document")) return "📝";
+  if (type.includes("sheet") || type.includes("excel")) return "📊";
+  if (type.includes("zip")) return "📦";
+  return "📎";
 };
 
 // ---------------------------------------------------------------------------
-// UI State Management
+// UI State
 // ---------------------------------------------------------------------------
 
 const updateStatus = (elements, status, message) => {
-  const { statusSection, statusText } = elements;
-
-  const statusClassMap = {
+  const map = {
     [STATUS.WAITING]: "status-waiting",
     [STATUS.COPIED]: "status-copied",
     [STATUS.ERROR]: "status-error",
   };
-
-  const cssClass = statusClassMap[status] || "status-waiting";
-  setStatusClass(statusSection, "status-section", cssClass);
-  setText(statusText, message);
-};
-
-const showReceivedText = (elements, text) => {
-  setText(elements.receivedText, text);
-  show(elements.receivedSection);
-
-  // Show/hide "Open Link" button based on URL detection
-  if (isUrl(text)) {
-    show(elements.openLinkBtn);
-  } else {
-    hide(elements.openLinkBtn);
-  }
+  setStatusClass(elements.statusSection, "status-section", map[status] || "status-waiting");
+  setText(elements.statusText, message);
 };
 
 // ---------------------------------------------------------------------------
@@ -99,237 +102,262 @@ const showReceivedText = (elements, text) => {
 
 const renderHistory = (elements, historyService, clipboardService) => {
   const items = historyService.getItems();
-  const { historyList, historyClearBtn, historyEmpty, historyCount } = elements;
-
-  setText(historyCount, String(items.length));
+  setText(elements.historyCount, String(items.length));
 
   if (items.length === 0) {
-    historyList.innerHTML = "";
-    hide(historyClearBtn);
-    show(historyEmpty);
+    elements.historyList.innerHTML = "";
+    hide(elements.historyClearBtn);
+    show(elements.historyEmpty);
     return;
   }
 
-  hide(historyEmpty);
-  show(historyClearBtn);
+  hide(elements.historyEmpty);
+  show(elements.historyClearBtn);
 
-  historyList.innerHTML = items.map((item, index) => {
-    const icon = item.direction === "sent" ? "📤" : "📥";
-    const time = formatTime(item.timestamp);
-    return `
-      <div class="history-item" data-index="${index}" title="Click to copy">
-        <span class="history-item-icon">${icon}</span>
-        <span class="history-item-text">${escapeHtml(item.text)}</span>
-        <span class="history-item-time">${time}</span>
-      </div>
-    `;
+  elements.historyList.innerHTML = items.map((item, i) => {
+    const icon = item.direction === "sent" ? "📤" : item.isFile ? "📎" : "📥";
+    return `<div class="history-item" data-index="${i}" title="Click to copy">
+      <span class="history-item-icon">${icon}</span>
+      <span class="history-item-text">${escapeHtml(item.text)}</span>
+      <span class="history-item-time">${formatTime(item.timestamp)}</span>
+    </div>`;
   }).join("");
 
-  // Click to copy handler (event delegation)
-  historyList.onclick = async (e) => {
-    const itemEl = e.target.closest(".history-item");
-    if (!itemEl) return;
-
-    const index = parseInt(itemEl.dataset.index, 10);
-    const item = items[index];
+  elements.historyList.onclick = async (e) => {
+    const el = e.target.closest(".history-item");
+    if (!el) return;
+    const item = items[parseInt(el.dataset.index, 10)];
     if (item) {
       await clipboardService.copyToClipboard(item.fullText);
-      itemEl.style.background = "rgba(52, 211, 153, 0.15)";
-      setTimeout(() => {
-        itemEl.style.background = "";
-      }, 500);
+      el.style.background = "rgba(52,211,153,0.15)";
+      setTimeout(() => { el.style.background = ""; }, 500);
     }
   };
 };
 
-const escapeHtml = (text) =>
-  text.replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+// ---------------------------------------------------------------------------
+// File Download Helper
+// ---------------------------------------------------------------------------
+
+const triggerDownload = (base64Data, fileName, mimeType) => {
+  const link = document.createElement("a");
+  link.href = `data:${mimeType};base64,${base64Data}`;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 // ---------------------------------------------------------------------------
-// App Initialization
+// App Init
 // ---------------------------------------------------------------------------
 
 const initApp = async () => {
   const elements = getElements();
 
-  // --- Create services (Dependency Injection) ---
   const firebaseService = createFirebaseService(FIREBASE_CONFIG);
   const roomService = createRoomService();
   const qrService = createQRService();
   const clipboardService = createClipboardService();
   const historyService = createHistoryService();
+  const cryptoService = createCryptoService();
 
-  // Track the last received text for "copy again" functionality
   let lastReceivedText = "";
+  let lastReceivedFile = null;
   let currentRoomId = null;
+  let encryptionKey = null;
+  let encryptionKeyBase64 = null;
+
+  // --- Generate encryption key ---
+  const setupEncryption = async () => {
+    const rawKey = await cryptoService.generateKey();
+    encryptionKeyBase64 = await cryptoService.exportKey(rawKey);
+    encryptionKey = await cryptoService.importKey(encryptionKeyBase64);
+  };
+
+  // --- Decrypt incoming data ---
+  const decryptPayload = async (data) => {
+    if (!encryptionKey || !data.encrypted) return data;
+    try {
+      const decryptedText = await cryptoService.decrypt(encryptionKey, data.data, data.iv);
+      return JSON.parse(decryptedText);
+    } catch (err) {
+      console.error("[Popup] Decryption failed:", err);
+      return null;
+    }
+  };
+
+  // --- Encrypt outgoing data ---
+  const encryptPayload = async (payload) => {
+    if (!encryptionKey) return payload;
+    const plaintext = JSON.stringify(payload);
+    const { data, iv } = await cryptoService.encrypt(encryptionKey, plaintext);
+    return { encrypted: true, data, iv };
+  };
 
   // --- Setup Room ---
   const setupRoom = async (roomId) => {
     currentRoomId = roomId;
     setText(elements.roomId, roomId);
 
-    // Generate QR code
-    const mobileUrl = roomService.buildMobileUrl(roomId);
+    const mobileUrl = roomService.buildMobileUrl(roomId, encryptionKeyBase64);
     try {
       await qrService.generateQRCode(elements.qrContainer, mobileUrl);
-    } catch (error) {
+    } catch {
       updateStatus(elements, STATUS.ERROR, "QR code generation failed");
       return;
     }
 
-    // Reset status
     updateStatus(elements, STATUS.WAITING, "Waiting for connection...");
     hide(elements.receivedSection);
+    hide(elements.receivedFileSection);
 
-    // Listen for incoming data from mobile (toPC)
-    firebaseService.listenToRoom(roomId, async (text, error) => {
+    // Listen for incoming data
+    firebaseService.listenToRoom(roomId, async (rawData, error) => {
       if (error) {
         updateStatus(elements, STATUS.ERROR, "Connection error. Try a new room.");
         return;
       }
+      if (!rawData) return;
 
-      if (text) {
-        // Copy to clipboard
+      const data = await decryptPayload(rawData);
+      if (!data) {
+        updateStatus(elements, STATUS.ERROR, "Decryption failed");
+        return;
+      }
+
+      // --- Handle file ---
+      if (data.file) {
+        const f = data.file;
+        lastReceivedFile = f;
+
+        setText(elements.fileIcon, getFileIcon(f.type));
+        setText(elements.fileName, f.name);
+        setText(elements.fileSize, formatBytes(f.size));
+
+        if (f.type.startsWith("image/")) {
+          elements.imagePreview.src = `data:${f.type};base64,${f.data}`;
+          show(elements.imagePreview);
+        } else {
+          hide(elements.imagePreview);
+        }
+
+        show(elements.receivedFileSection);
+        hide(elements.receivedSection);
+
+        historyService.addItem(`📎 ${f.name}`, "received");
+        renderHistory(elements, historyService, clipboardService);
+        updateStatus(elements, STATUS.COPIED, "File received!");
+      }
+
+      // --- Handle text ---
+      if (data.text) {
+        const text = data.text;
+
         const success = await clipboardService.copyToClipboard(text);
-
         if (success) {
           lastReceivedText = text;
-
-          // Add to history
           historyService.addItem(text, "received");
           renderHistory(elements, historyService, clipboardService);
 
-          // Update status
-          const statusMsg = isUrl(text)
-            ? "Link copied to clipboard!"
-            : "Copied to clipboard!";
-          updateStatus(elements, STATUS.COPIED, statusMsg);
-          showReceivedText(elements, text);
+          const msg = isUrl(text) ? "Link copied!" : "Copied to clipboard!";
+          updateStatus(elements, STATUS.COPIED, msg);
 
-          // Clear the room in Firebase
-          try {
-            await firebaseService.clearRoom(roomId);
-          } catch (clearError) {
-            console.warn("[Popup] Failed to clear room:", clearError);
-          }
+          setText(elements.receivedText, text);
+          show(elements.receivedSection);
+          hide(elements.receivedFileSection);
 
-          // Reset status after delay
-          setTimeout(() => {
-            updateStatus(elements, STATUS.WAITING, "Waiting for more...");
-          }, STATUS_DISPLAY_DURATION);
+          if (isUrl(text)) { show(elements.openLinkBtn); }
+          else { hide(elements.openLinkBtn); }
         } else {
-          updateStatus(elements, STATUS.ERROR, "Failed to copy to clipboard");
+          updateStatus(elements, STATUS.ERROR, "Failed to copy");
         }
       }
+
+      // Clear from Firebase
+      try { await firebaseService.clearRoom(roomId); } catch {}
+
+      setTimeout(() => {
+        updateStatus(elements, STATUS.WAITING, "Waiting for more...");
+      }, STATUS_DISPLAY_DURATION);
     });
   };
 
-  // --- Start with a new room ---
+  // --- New room ---
   const startNewRoom = async () => {
     firebaseService.dispose();
+    await setupEncryption();
     const roomId = roomService.generateRoomId();
     await setupRoom(roomId);
   };
 
-  // --- Send to Mobile handler ---
+  // --- Send to mobile ---
   const handleSendToMobile = async () => {
     const text = elements.sendToMobileInput.value.trim();
     if (!text || !currentRoomId) return;
 
     elements.sendToMobileBtn.disabled = true;
-
     try {
-      await firebaseService.sendToMobile(currentRoomId, text);
+      const payload = await encryptPayload({ text });
+      await firebaseService.sendToMobile(currentRoomId, payload);
       historyService.addItem(text, "sent");
       renderHistory(elements, historyService, clipboardService);
       elements.sendToMobileInput.value = "";
-      elements.sendToMobileBtn.disabled = true;
-    } catch (error) {
-      console.error("[Popup] Send to mobile failed:", error);
-      updateStatus(elements, STATUS.ERROR, "Failed to send to phone");
-      setTimeout(() => {
-        updateStatus(elements, STATUS.WAITING, "Waiting for more...");
-      }, STATUS_DISPLAY_DURATION);
+    } catch (err) {
+      console.error("[Popup] Send failed:", err);
+      updateStatus(elements, STATUS.ERROR, "Failed to send");
+      setTimeout(() => updateStatus(elements, STATUS.WAITING, "Waiting..."), STATUS_DISPLAY_DURATION);
     }
   };
 
   // --- Event Listeners ---
-
-  // New room
   on(elements.newRoomBtn, "click", startNewRoom);
 
-  // Copy again
   on(elements.copyAgainBtn, "click", async () => {
-    if (lastReceivedText) {
-      const success = await clipboardService.copyToClipboard(lastReceivedText);
-      if (success) {
-        updateStatus(elements, STATUS.COPIED, "Copied again!");
-        setTimeout(() => {
-          updateStatus(elements, STATUS.WAITING, "Waiting for more...");
-        }, STATUS_DISPLAY_DURATION);
-      }
+    if (!lastReceivedText) return;
+    const ok = await clipboardService.copyToClipboard(lastReceivedText);
+    if (ok) {
+      updateStatus(elements, STATUS.COPIED, "Copied again!");
+      setTimeout(() => updateStatus(elements, STATUS.WAITING, "Waiting..."), STATUS_DISPLAY_DURATION);
     }
   });
 
-  // Open link in new tab
   on(elements.openLinkBtn, "click", () => {
     if (lastReceivedText && isUrl(lastReceivedText)) {
       window.open(lastReceivedText, "_blank");
     }
   });
 
-  // Send to mobile - input enable/disable
+  on(elements.downloadFileBtn, "click", () => {
+    if (lastReceivedFile) {
+      triggerDownload(lastReceivedFile.data, lastReceivedFile.name, lastReceivedFile.type);
+    }
+  });
+
   on(elements.sendToMobileInput, "input", () => {
     elements.sendToMobileBtn.disabled = elements.sendToMobileInput.value.trim().length === 0;
   });
-
-  // Send to mobile - click
   on(elements.sendToMobileBtn, "click", handleSendToMobile);
-
-  // Send to mobile - Enter key
   on(elements.sendToMobileInput, "keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSendToMobile();
-    }
+    if (e.key === "Enter") { e.preventDefault(); handleSendToMobile(); }
   });
 
-  // History toggle
   let historyOpen = false;
   on(elements.historyToggleBtn, "click", () => {
     historyOpen = !historyOpen;
-    if (historyOpen) {
-      show(elements.historyPanel);
-      addClass(elements.historyChevron, "open");
-    } else {
-      hide(elements.historyPanel);
-      removeClass(elements.historyChevron, "open");
-    }
+    if (historyOpen) { show(elements.historyPanel); addClass(elements.historyChevron, "open"); }
+    else { hide(elements.historyPanel); removeClass(elements.historyChevron, "open"); }
   });
 
-  // History clear
   on(elements.historyClearBtn, "click", () => {
     historyService.clearHistory();
     renderHistory(elements, historyService, clipboardService);
   });
 
-  // Initial history render
   renderHistory(elements, historyService, clipboardService);
-
-  // --- Initial setup ---
   await startNewRoom();
 
-  // Cleanup on popup close
-  window.addEventListener("unload", () => {
-    firebaseService.dispose();
-  });
+  window.addEventListener("unload", () => firebaseService.dispose());
 };
-
-// ---------------------------------------------------------------------------
-// Bootstrap
-// ---------------------------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", initApp);

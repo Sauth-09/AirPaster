@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // Mobile Web Entry Point — App Controller
 // ---------------------------------------------------------------------------
-// Orchestrates URL parsing, Firebase sending/receiving, history, and UI state.
-// No business logic in the UI layer.
+// Orchestrates: text/file sending, receiving from PC, encryption,
+// session reconnect, history.
 // ---------------------------------------------------------------------------
 
 import { FIREBASE_CONFIG } from "./config/firebase-config.js";
@@ -11,72 +11,62 @@ import { STATUS, MAX_TEXT_LENGTH, STATUS_DISPLAY_DURATION, URL_REGEX } from "./u
 import { createFirebaseService } from "./services/firebase-service.js";
 import { createUrlService } from "./services/url-service.js";
 import { createHistoryService } from "./services/history-service.js";
+import { createCryptoService } from "./services/crypto-service.js";
+import { createFileService } from "./services/file-service.js";
+import { createSessionService } from "./services/session-service.js";
 
 // ---------------------------------------------------------------------------
-// DOM Helpers (inline for mobile — keeps bundle small)
+// DOM Helpers
 // ---------------------------------------------------------------------------
 
-const $ = (selector) => document.querySelector(selector);
-
-const setText = (el, text) => {
-  if (el) el.textContent = text;
-};
-
-const show = (el) => {
-  if (el) el.classList.remove("hidden");
-};
-
-const hide = (el) => {
-  if (el) el.classList.add("hidden");
-};
-
-const addClass = (el, ...cls) => {
-  if (el) el.classList.add(...cls);
-};
-
-const removeClass = (el, ...cls) => {
-  if (el) el.classList.remove(...cls);
-};
+const $ = (s) => document.querySelector(s);
+const setText = (el, t) => { if (el) el.textContent = t; };
+const show = (el) => { if (el) el.classList.remove("hidden"); };
+const hide = (el) => { if (el) el.classList.add("hidden"); };
+const addClass = (el, ...c) => { if (el) el.classList.add(...c); };
+const removeClass = (el, ...c) => { if (el) el.classList.remove(...c); };
 
 // ---------------------------------------------------------------------------
-// Utility
+// Utilities
 // ---------------------------------------------------------------------------
 
-const isUrl = (text) => URL_REGEX.test(text.trim());
+const isUrl = (t) => URL_REGEX.test(t.trim());
 
-const escapeHtml = (text) =>
-  text.replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+const escapeHtml = (t) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
+const formatTime = (ts) => {
+  const d = new Date(ts);
   const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-
-  if (isToday) {
-    return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-  }
-  return date.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" });
+  if (d.toDateString() === now.toDateString())
+    return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" });
 };
 
 // ---------------------------------------------------------------------------
-// DOM Element References
+// DOM References
 // ---------------------------------------------------------------------------
 
 const getElements = () => ({
+  encryptionBadge: $("#encryption-badge"),
   connectionBar: $("#connection-bar"),
   connectionText: $("#connection-text"),
   connectionRoomId: $("#connection-room-id"),
   noRoomSection: $("#no-room-section"),
+  reconnectBtn: $("#reconnect-btn"),
+  reconnectInfo: $("#reconnect-info"),
   inputSection: $("#input-section"),
   textInput: $("#text-input"),
   charCount: $("#char-count"),
   sendBtn: $("#send-btn"),
-  sendBtnText: $("#send-btn-text"),
-  sendBtnLoader: $("#send-btn-loader"),
   sendBtnContent: $(".send-btn-content"),
+  sendBtnLoader: $("#send-btn-loader"),
+  // File
+  photoInput: $("#photo-input"),
+  fileInput: $("#file-input"),
+  fileSending: $("#file-sending"),
+  fileSendingText: $("#file-sending-text"),
+  // Toast
   toast: $("#toast"),
   toastIcon: $("#toast-icon"),
   toastText: $("#toast-text"),
@@ -95,109 +85,82 @@ const getElements = () => ({
 });
 
 // ---------------------------------------------------------------------------
-// Toast Notifications
+// Toast
 // ---------------------------------------------------------------------------
 
 let toastTimer = null;
 
 const showToast = (elements, message, type = "success") => {
   const { toast, toastIcon, toastText } = elements;
-
   if (toastTimer) clearTimeout(toastTimer);
-
   removeClass(toast, "toast-success", "toast-error", "hidden");
   addClass(toast, `toast-${type}`);
   setText(toastIcon, type === "success" ? "✓" : "✕");
   setText(toastText, message);
-
-  requestAnimationFrame(() => {
-    addClass(toast, "visible");
-  });
-
+  requestAnimationFrame(() => addClass(toast, "visible"));
   toastTimer = setTimeout(() => {
     removeClass(toast, "visible");
-    setTimeout(() => {
-      addClass(toast, "hidden");
-    }, 300);
+    setTimeout(() => addClass(toast, "hidden"), 300);
   }, STATUS_DISPLAY_DURATION);
 };
 
 // ---------------------------------------------------------------------------
-// Send Button State Management
+// Send Button State
 // ---------------------------------------------------------------------------
 
 const setSendLoading = (elements, loading) => {
-  const { sendBtn, sendBtnContent, sendBtnLoader } = elements;
-
-  sendBtn.disabled = loading;
-
+  elements.sendBtn.disabled = loading;
   if (loading) {
-    hide(sendBtnContent);
-    show(sendBtnLoader);
-    removeClass(sendBtnLoader, "hidden");
+    hide(elements.sendBtnContent);
+    show(elements.sendBtnLoader);
   } else {
-    show(sendBtnContent);
-    hide(sendBtnLoader);
+    show(elements.sendBtnContent);
+    hide(elements.sendBtnLoader);
   }
 };
 
-// ---------------------------------------------------------------------------
-// Character Count
-// ---------------------------------------------------------------------------
-
 const updateCharCount = (elements) => {
   const count = elements.textInput.value.length;
-  const formatted = count.toLocaleString();
-  const max = MAX_TEXT_LENGTH.toLocaleString();
-  setText(elements.charCount, `${formatted} / ${max}`);
+  setText(elements.charCount, `${count.toLocaleString()} / ${MAX_TEXT_LENGTH.toLocaleString()}`);
   elements.sendBtn.disabled = count === 0;
 };
 
 // ---------------------------------------------------------------------------
-// History Rendering (Mobile)
+// History Rendering
 // ---------------------------------------------------------------------------
 
 const renderHistory = (elements, historyService) => {
   const items = historyService.getItems();
-  const { historyList, historyClear, historyEmpty, historyCount } = elements;
-
-  setText(historyCount, String(items.length));
+  setText(elements.historyCount, String(items.length));
 
   if (items.length === 0) {
-    historyList.innerHTML = "";
-    hide(historyClear);
-    show(historyEmpty);
+    elements.historyList.innerHTML = "";
+    hide(elements.historyClear);
+    show(elements.historyEmpty);
     return;
   }
 
-  hide(historyEmpty);
-  show(historyClear);
+  hide(elements.historyEmpty);
+  show(elements.historyClear);
 
-  historyList.innerHTML = items.map((item, index) => {
+  elements.historyList.innerHTML = items.map((item, i) => {
     const icon = item.direction === "sent" ? "📤" : "📥";
-    const time = formatTime(item.timestamp);
-    return `
-      <div class="history-item-mobile" data-index="${index}">
-        <span class="history-item-mobile-icon">${icon}</span>
-        <span class="history-item-mobile-text">${escapeHtml(item.text)}</span>
-        <span class="history-item-mobile-time">${time}</span>
-      </div>
-    `;
+    return `<div class="history-item-mobile" data-index="${i}">
+      <span class="history-item-mobile-icon">${icon}</span>
+      <span class="history-item-mobile-text">${escapeHtml(item.text)}</span>
+      <span class="history-item-mobile-time">${formatTime(item.timestamp)}</span>
+    </div>`;
   }).join("");
 
-  // Click to copy (event delegation)
-  historyList.onclick = async (e) => {
-    const itemEl = e.target.closest(".history-item-mobile");
-    if (!itemEl) return;
-
-    const index = parseInt(itemEl.dataset.index, 10);
-    const item = items[index];
+  elements.historyList.onclick = async (e) => {
+    const el = e.target.closest(".history-item-mobile");
+    if (!el) return;
+    const item = items[parseInt(el.dataset.index, 10)];
     if (item) {
       try {
         await navigator.clipboard.writeText(item.fullText);
         showToast(elements, "Copied!", "success");
-      } catch (err) {
-        // Fallback: put in textarea
+      } catch {
         elements.textInput.value = item.fullText;
         updateCharCount(elements);
         showToast(elements, "Pasted into text box", "success");
@@ -207,174 +170,236 @@ const renderHistory = (elements, historyService) => {
 };
 
 // ---------------------------------------------------------------------------
-// App Initialization
+// Connect to Room (main logic)
 // ---------------------------------------------------------------------------
 
-const initApp = () => {
-  const elements = getElements();
-
-  // --- Create services (Dependency Injection) ---
-  const urlService = createUrlService();
-  const roomId = urlService.getRoomIdFromUrl();
-
-  // --- No room ID: show warning ---
-  if (!roomId) {
-    addClass(elements.connectionBar, "disconnected");
-    setText(elements.connectionText, "No room connected");
-    setText(elements.connectionRoomId, "");
-    show(elements.noRoomSection);
-    hide(elements.inputSection);
-    return;
-  }
-
-  // --- Room found: setup sender + receiver ---
+const connectToRoom = (elements, roomId, keyBase64) => {
   const firebaseService = createFirebaseService(FIREBASE_CONFIG);
   const historyService = createHistoryService();
+  const cryptoService = createCryptoService();
+  const fileService = createFileService();
+  const sessionService = createSessionService();
 
-  // Track last received text for copy/open
+  let encryptionKey = null;
   let lastReceivedFromPC = "";
 
-  // Update connection bar
+  // Save session for reconnect
+  sessionService.saveSession(roomId, keyBase64);
+
+  // Update UI
   setText(elements.connectionText, "Connected to room");
   setText(elements.connectionRoomId, roomId);
-
-  // Show input section
   hide(elements.noRoomSection);
   show(elements.inputSection);
 
-  // --- Character count updates ---
-  elements.textInput.addEventListener("input", () => {
-    updateCharCount(elements);
-  });
+  // Show encryption badge if key present
+  if (keyBase64) {
+    show(elements.encryptionBadge);
+  }
 
-  // --- Send to PC handler ---
+  // --- Setup encryption ---
+  const setupEncryption = async () => {
+    if (keyBase64) {
+      encryptionKey = await cryptoService.importKey(keyBase64);
+    }
+  };
+
+  const encryptPayload = async (payload) => {
+    if (!encryptionKey) return payload;
+    const plaintext = JSON.stringify(payload);
+    const { data, iv } = await cryptoService.encrypt(encryptionKey, plaintext);
+    return { encrypted: true, data, iv };
+  };
+
+  const decryptPayload = async (rawData) => {
+    if (!encryptionKey || !rawData.encrypted) return rawData;
+    try {
+      const decrypted = await cryptoService.decrypt(encryptionKey, rawData.data, rawData.iv);
+      return JSON.parse(decrypted);
+    } catch (err) {
+      console.error("[App] Decryption failed:", err);
+      return null;
+    }
+  };
+
+  // --- Text input ---
+  elements.textInput.addEventListener("input", () => updateCharCount(elements));
+
+  // --- Send text ---
   const handleSend = async () => {
     const text = elements.textInput.value.trim();
-
-    if (!text) {
-      showToast(elements, "Please enter some text first", "error");
-      return;
-    }
-
+    if (!text) { showToast(elements, "Enter some text first", "error"); return; }
     if (text.length > MAX_TEXT_LENGTH) {
-      showToast(elements, `Text exceeds ${MAX_TEXT_LENGTH.toLocaleString()} character limit`, "error");
+      showToast(elements, `Max ${MAX_TEXT_LENGTH.toLocaleString()} characters`, "error");
       return;
     }
 
     setSendLoading(elements, true);
-
     try {
-      await firebaseService.sendToRoom(roomId, text);
-
-      // Add to history
+      const payload = await encryptPayload({ text });
+      await firebaseService.sendToRoom(roomId, payload);
       historyService.addItem(text, "sent");
       renderHistory(elements, historyService);
-
-      showToast(elements, "Sent to your computer!", "success");
+      showToast(elements, "Sent to computer!", "success");
       elements.textInput.value = "";
       updateCharCount(elements);
-    } catch (error) {
-      console.error("[App] Send failed:", error);
-      showToast(elements, "Failed to send. Check your connection.", "error");
+    } catch (err) {
+      console.error("[App] Send failed:", err);
+      showToast(elements, "Failed to send", "error");
     } finally {
       setSendLoading(elements, false);
     }
   };
 
-  // Send button click
   elements.sendBtn.addEventListener("click", handleSend);
-
-  // Ctrl+Enter / Cmd+Enter to send
   elements.textInput.addEventListener("keydown", (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
-    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); handleSend(); }
   });
 
-  // --- Listen for data from PC (toMobile) ---
-  firebaseService.listenToRoom(roomId, async (text, error) => {
-    if (error) {
-      console.error("[App] Listen error:", error);
+  // --- Send file handler ---
+  const handleFileSelect = async (file) => {
+    if (!file) return;
+
+    const validation = fileService.validateFile(file);
+    if (!validation.valid) {
+      showToast(elements, validation.message, "error");
       return;
     }
 
-    if (text) {
-      lastReceivedFromPC = text;
+    show(elements.fileSending);
+    setText(elements.fileSendingText, `Sending ${file.name}...`);
 
-      // Show received section
-      setText(elements.receivedFromPCText, text);
-      show(elements.receivedFromPC);
-
-      // Show/hide open link button
-      if (isUrl(text)) {
-        show(elements.openLinkMobileBtn);
-      } else {
-        hide(elements.openLinkMobileBtn);
-      }
-
-      // Add to history
-      historyService.addItem(text, "received");
+    try {
+      const processedFile = await fileService.processFile(file);
+      const payload = await encryptPayload({ file: processedFile });
+      await firebaseService.sendToRoom(roomId, payload);
+      historyService.addItem(`📎 ${file.name}`, "sent");
       renderHistory(elements, historyService);
-
-      // Show toast
-      showToast(elements, "Received from computer!", "success");
-
-      // Clear from Firebase
-      try {
-        await firebaseService.clearToMobile(roomId);
-      } catch (clearError) {
-        console.warn("[App] Failed to clear toMobile:", clearError);
-      }
+      showToast(elements, `${file.name} sent!`, "success");
+    } catch (err) {
+      console.error("[App] File send failed:", err);
+      showToast(elements, err.message || "Failed to send file", "error");
+    } finally {
+      hide(elements.fileSending);
     }
+  };
+
+  elements.photoInput.addEventListener("change", (e) => {
+    handleFileSelect(e.target.files[0]);
+    e.target.value = ""; // Reset for re-select
   });
 
-  // --- Copy received text ---
+  elements.fileInput.addEventListener("change", (e) => {
+    handleFileSelect(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  // --- Listen for data from PC ---
+  const initListener = async () => {
+    await setupEncryption();
+
+    firebaseService.listenToRoom(roomId, async (rawData, error) => {
+      if (error) { console.error("[App] Listen error:", error); return; }
+      if (!rawData) return;
+
+      const data = await decryptPayload(rawData);
+      if (!data) { showToast(elements, "Decryption failed", "error"); return; }
+
+      if (data.text) {
+        lastReceivedFromPC = data.text;
+        setText(elements.receivedFromPCText, data.text);
+        show(elements.receivedFromPC);
+
+        if (isUrl(data.text)) { show(elements.openLinkMobileBtn); }
+        else { hide(elements.openLinkMobileBtn); }
+
+        historyService.addItem(data.text, "received");
+        renderHistory(elements, historyService);
+        showToast(elements, "Received from computer!", "success");
+      }
+
+      try { await firebaseService.clearToMobile(roomId); } catch {}
+    });
+  };
+
+  initListener();
+
+  // --- Copy received ---
   elements.copyReceivedBtn.addEventListener("click", async () => {
     if (!lastReceivedFromPC) return;
     try {
       await navigator.clipboard.writeText(lastReceivedFromPC);
       showToast(elements, "Copied!", "success");
-    } catch (err) {
-      // Fallback: put in textarea
+    } catch {
       elements.textInput.value = lastReceivedFromPC;
       updateCharCount(elements);
       showToast(elements, "Pasted into text box", "success");
     }
   });
 
-  // --- Open link from PC ---
+  // --- Open link ---
   elements.openLinkMobileBtn.addEventListener("click", () => {
     if (lastReceivedFromPC && isUrl(lastReceivedFromPC)) {
       window.open(lastReceivedFromPC, "_blank");
     }
   });
 
-  // --- History toggle ---
+  // --- History ---
   let historyOpen = false;
   elements.historyToggle.addEventListener("click", () => {
     historyOpen = !historyOpen;
-    if (historyOpen) {
-      show(elements.historyPanel);
-    } else {
-      hide(elements.historyPanel);
-    }
+    if (historyOpen) show(elements.historyPanel);
+    else hide(elements.historyPanel);
   });
 
-  // --- History clear ---
   elements.historyClear.addEventListener("click", () => {
     historyService.clearHistory();
     renderHistory(elements, historyService);
   });
 
-  // --- Initial renders ---
   renderHistory(elements, historyService);
   updateCharCount(elements);
   elements.textInput.focus();
 };
 
 // ---------------------------------------------------------------------------
-// Bootstrap
+// App Initialization
 // ---------------------------------------------------------------------------
+
+const initApp = () => {
+  const elements = getElements();
+  const urlService = createUrlService();
+  const sessionService = createSessionService();
+
+  const roomId = urlService.getRoomIdFromUrl();
+  const keyBase64 = urlService.getEncryptionKeyFromUrl();
+
+  // --- Room found in URL ---
+  if (roomId) {
+    connectToRoom(elements, roomId, keyBase64);
+    return;
+  }
+
+  // --- No room: check for saved session ---
+  addClass(elements.connectionBar, "disconnected");
+  setText(elements.connectionText, "No room connected");
+  setText(elements.connectionRoomId, "");
+  show(elements.noRoomSection);
+  hide(elements.inputSection);
+
+  const lastSession = sessionService.getLastSession();
+  if (lastSession) {
+    show(elements.reconnectBtn);
+    setText(elements.reconnectInfo,
+      `Room ${lastSession.roomId} · ${sessionService.getTimeAgo(lastSession.timestamp)}`
+    );
+
+    elements.reconnectBtn.addEventListener("click", () => {
+      hide(elements.noRoomSection);
+      removeClass(elements.connectionBar, "disconnected");
+      connectToRoom(elements, lastSession.roomId, lastSession.encryptionKey);
+    });
+  }
+};
 
 document.addEventListener("DOMContentLoaded", initApp);

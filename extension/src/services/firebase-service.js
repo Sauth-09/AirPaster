@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // Firebase Service — Extension (Receiver + Sender)
 // ---------------------------------------------------------------------------
-// Handles: initialization, real-time listening on toPC, sending to toMobile,
-// and room cleanup.
+// Handles: real-time listening on toPC, sending to toMobile,
+// file transfers, and room cleanup.
 // ---------------------------------------------------------------------------
 
 import { initializeApp } from "firebase/app";
@@ -18,29 +18,27 @@ export const createFirebaseService = (config) => {
   const app = initializeApp(config);
   const db = getDatabase(app);
 
-  // Track active listeners for cleanup
   let activeUnsubscribe = null;
 
   /**
    * Listen to a room for incoming data from mobile (toPC path).
+   * Callback receives the full data object (may contain text or file).
    * @param {string} roomId
-   * @param {(text: string|null, error?: Error) => void} callback
-   * @returns {Function} Unsubscribe function
+   * @param {(data: Object|null, error?: Error) => void} callback
    */
   const listenToRoom = (roomId, callback) => {
-    // Clean up previous listener if any
     if (activeUnsubscribe) {
       activeUnsubscribe();
     }
 
     const toPCRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toPC`);
 
-    const unsubscribe = onValue(
+    onValue(
       toPCRef,
       (snapshot) => {
         const data = snapshot.val();
-        if (data && data.text) {
-          callback(data.text);
+        if (data) {
+          callback(data);
         }
       },
       (error) => {
@@ -58,46 +56,39 @@ export const createFirebaseService = (config) => {
   };
 
   /**
-   * Send text from the extension to the mobile device (toMobile path).
+   * Send text from extension to mobile (toMobile path).
    * @param {string} roomId
-   * @param {string} text
-   * @returns {Promise<void>}
+   * @param {Object} payload - Data to send (text, encrypted, or file)
    */
-  const sendToMobile = async (roomId, text) => {
-    if (!roomId || !text || text.trim().length === 0) {
-      throw new Error("[FirebaseService] Room ID and text are required");
-    }
+  const sendToMobile = async (roomId, payload) => {
+    if (!roomId) throw new Error("[FirebaseService] Room ID required");
 
     try {
       const toMobileRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toMobile`);
       await set(toMobileRef, {
-        text: text.trim(),
+        ...payload,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error(`[FirebaseService] Send to mobile error for room ${roomId}:`, error);
+      console.error(`[FirebaseService] Send to mobile error:`, error);
       throw error;
     }
   };
 
   /**
-   * Clear the toPC data after it has been received and processed.
+   * Clear toPC data after processing.
    * @param {string} roomId
-   * @returns {Promise<void>}
    */
   const clearRoom = async (roomId) => {
     try {
       const toPCRef = ref(db, `${DB_ROOMS_PATH}/${roomId}/toPC`);
       await remove(toPCRef);
     } catch (error) {
-      console.error(`[FirebaseService] Clear room error for ${roomId}:`, error);
+      console.error(`[FirebaseService] Clear room error:`, error);
       throw error;
     }
   };
 
-  /**
-   * Dispose all active listeners and clean up resources.
-   */
   const dispose = () => {
     if (activeUnsubscribe) {
       activeUnsubscribe();

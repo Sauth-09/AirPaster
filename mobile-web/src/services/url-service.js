@@ -1,31 +1,22 @@
 // ---------------------------------------------------------------------------
-// URL Service — URL Parameter Parsing & Validation
-// ---------------------------------------------------------------------------
-// Pure functions for extracting and validating room IDs from URLs.
+// URL Service — URL Parsing for Room ID and Encryption Key
 // ---------------------------------------------------------------------------
 
 import { ROOM_ID_REGEX } from "../utils/constants.js";
 
-/**
- * @typedef {Object} UrlService
- * @property {() => string|null} getRoomIdFromUrl
- * @property {(roomId: string) => boolean} validateRoomId
- */
-
-/**
- * Creates a URL service instance.
- * @returns {UrlService}
- */
 export const createUrlService = () => {
   /**
-   * Extract the room ID from the current page URL's query parameters.
-   * @returns {string|null} The room ID, or null if not found
+   * Extract the room ID from the current URL query parameters.
+   * @returns {string|null}
    */
   const getRoomIdFromUrl = () => {
     try {
       const params = new URLSearchParams(window.location.search);
       const roomId = params.get("room");
-      return roomId && validateRoomId(roomId) ? roomId : null;
+      if (roomId && ROOM_ID_REGEX.test(roomId)) {
+        return roomId;
+      }
+      return null;
     } catch (error) {
       console.error("[UrlService] Failed to parse URL:", error);
       return null;
@@ -33,14 +24,22 @@ export const createUrlService = () => {
   };
 
   /**
-   * Validate a room ID against the expected format (XXXX-XXX).
-   * @param {string} roomId
-   * @returns {boolean}
+   * Extract the encryption key from the URL hash fragment.
+   * Hash format: #key=abc123...
+   * @returns {string|null}
    */
-  const validateRoomId = (roomId) => {
-    if (!roomId || typeof roomId !== "string") return false;
-    return ROOM_ID_REGEX.test(roomId);
+  const getEncryptionKeyFromUrl = () => {
+    try {
+      const hash = window.location.hash;
+      if (!hash || !hash.includes("key=")) return null;
+
+      const keyMatch = hash.match(/key=([A-Za-z0-9_-]+)/);
+      return keyMatch ? keyMatch[1] : null;
+    } catch (error) {
+      console.error("[UrlService] Failed to parse encryption key:", error);
+      return null;
+    }
   };
 
-  return Object.freeze({ getRoomIdFromUrl, validateRoomId });
+  return Object.freeze({ getRoomIdFromUrl, getEncryptionKeyFromUrl });
 };
