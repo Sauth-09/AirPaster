@@ -7,7 +7,7 @@
  * Update this with your actual deployment URL.
  * @example "https://your-username.github.io/airpaste/"
  */
-export const MOBILE_WEB_BASE_URL = "https://your-username.github.io/airpaste/";
+export const MOBILE_WEB_BASE_URL = "https://sauth-09.github.io/AirPaster/mobile-web/";
 
 /** Firebase Realtime Database root path for rooms */
 export const DB_ROOMS_PATH = "rooms";
