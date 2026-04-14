@@ -260,12 +260,6 @@ const connectToRoom = (elements, roomId, keyBase64) => {
   const handleFileSelect = async (file) => {
     if (!file) return;
 
-    const validation = fileService.validateFile(file);
-    if (!validation.valid) {
-      showToast(elements, validation.message, "error");
-      return;
-    }
-
     show(elements.fileSending);
     setText(elements.fileSendingText, `Sending ${file.name}...`);
 
