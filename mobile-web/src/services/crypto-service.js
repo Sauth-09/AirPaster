@@ -1,19 +1,35 @@
 // ---------------------------------------------------------------------------
 // Crypto Service — End-to-End Encryption (AES-256-GCM) — Mobile
 // ---------------------------------------------------------------------------
-// Same interface as extension crypto-service. Key is extracted from URL hash.
-// ---------------------------------------------------------------------------
 
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
+const CHUNK_SIZE = 8192;
+
+const bytesToBase64 = (bytes) => {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, Math.min(i + CHUNK_SIZE, bytes.length));
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
+};
+
+const base64ToBytes = (base64) => {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
 
 export const createCryptoService = () => {
   const importKey = async (base64) => {
     const normalized = base64.replace(/-/g, "+").replace(/_/g, "/");
     const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-    const binary = atob(padded);
-    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const bytes = base64ToBytes(padded);
 
     return crypto.subtle.importKey(
       "raw",
@@ -36,14 +52,14 @@ export const createCryptoService = () => {
 
     const cipherBytes = new Uint8Array(cipherBuffer);
     return {
-      data: btoa(String.fromCharCode(...cipherBytes)),
-      iv: btoa(String.fromCharCode(...iv)),
+      data: bytesToBase64(cipherBytes),
+      iv: bytesToBase64(iv),
     };
   };
 
   const decrypt = async (key, cipherBase64, ivBase64) => {
-    const cipherBytes = Uint8Array.from(atob(cipherBase64), (c) => c.charCodeAt(0));
-    const iv = Uint8Array.from(atob(ivBase64), (c) => c.charCodeAt(0));
+    const cipherBytes = base64ToBytes(cipherBase64);
+    const iv = base64ToBytes(ivBase64);
 
     const plainBuffer = await crypto.subtle.decrypt(
       { name: ALGORITHM, iv },
