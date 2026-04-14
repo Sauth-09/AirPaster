@@ -8,12 +8,11 @@ const IV_LENGTH = 12;
 const CHUNK_SIZE = 8192;
 
 const bytesToBase64 = (bytes) => {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
-    const chunk = bytes.subarray(i, Math.min(i + CHUNK_SIZE, bytes.length));
-    binary += String.fromCharCode.apply(null, chunk);
+  const binary = new Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) {
+    binary[i] = String.fromCharCode(bytes[i]);
   }
-  return btoa(binary);
+  return btoa(binary.join(""));
 };
 
 const base64ToBytes = (base64) => {
