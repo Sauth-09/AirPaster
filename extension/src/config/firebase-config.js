@@ -9,7 +9,7 @@
 export const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBXKZ3_WSjkXd26lsCtL5RTz9YM0OO4n6k",
   authDomain: "airpaste-70b6a.firebaseapp.com",
-  databaseURL: "https://airpaste-70b6a-default-rtdb.firebaseio.com",
+  databaseURL: "https://airpaste-70b6a-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "airpaste-70b6a",
   storageBucket: "airpaste-70b6a.firebasestorage.app",
   messagingSenderId: "267848957645",
