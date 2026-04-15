@@ -44,6 +44,21 @@ const formatTime = (ts) => {
   return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" });
 };
 
+const formatBytes = (bytes) => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+};
+
+const triggerDownloadMobile = (base64Data, fileName, mimeType) => {
+  const link = document.createElement("a");
+  link.href = `data:${mimeType};base64,${base64Data}`;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 // ---------------------------------------------------------------------------
 // DOM References
 // ---------------------------------------------------------------------------
@@ -76,6 +91,12 @@ const getElements = () => ({
   receivedFromPCText: $("#received-from-pc-text"),
   openLinkMobileBtn: $("#open-link-mobile-btn"),
   copyReceivedBtn: $("#copy-received-btn"),
+  receivedFileMobileSection: $("#received-file-mobile-section"),
+  downloadFileMobileBtn: $("#download-file-mobile-btn"),
+  mobileFileIcon: $("#mobile-file-icon"),
+  mobileFileName: $("#mobile-file-name"),
+  mobileFileSize: $("#mobile-file-size"),
+  mobileImagePreview: $("#mobile-image-preview"),
   // History
   historyToggle: $("#history-toggle-mobile"),
   historyCount: $("#history-count-mobile"),
@@ -145,7 +166,7 @@ const renderHistory = (elements, historyService, t) => {
   show(elements.historyClear);
 
   elements.historyList.innerHTML = items.map((item, i) => {
-    const icon = item.direction === "sent" ? "📤" : "📥";
+    const icon = item.direction === "sent" ? "📤" : item.isFile ? "📎" : "📥";
     return `<div class="history-item-mobile" data-index="${i}">
       <span class="history-item-mobile-icon">${icon}</span>
       <span class="history-item-mobile-text">${escapeHtml(item.text)}</span>
@@ -183,6 +204,7 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
 
   let encryptionKey = null;
   let lastReceivedFromPC = "";
+  let lastReceivedFileMobile = null;
 
   // Save session for reconnect
   sessionService.saveSession(roomId, keyBase64);
@@ -300,10 +322,34 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
       const data = await decryptPayload(rawData);
       if (!data) { showToast(elements, t("decryptFailedToast"), "error"); return; }
 
+      if (data.file) {
+        const f = data.file;
+        lastReceivedFileMobile = f;
+
+        setText(elements.mobileFileIcon, fileService.getFileIcon(f.type));
+        setText(elements.mobileFileName, f.name);
+        setText(elements.mobileFileSize, formatBytes(f.size));
+
+        if (f.type.startsWith("image/")) {
+          elements.mobileImagePreview.src = `data:${f.type};base64,${f.data}`;
+          show(elements.mobileImagePreview);
+        } else {
+          hide(elements.mobileImagePreview);
+        }
+
+        show(elements.receivedFileMobileSection);
+        hide(elements.receivedFromPC);
+
+        historyService.addItem(`📎 ${f.name}`, "received");
+        renderHistory(elements, historyService, t);
+        showToast(elements, t("fileSentToast", { filename: f.name }) || "File received", "success");
+      }
+
       if (data.text) {
         lastReceivedFromPC = data.text;
         setText(elements.receivedFromPCText, data.text);
         show(elements.receivedFromPC);
+        hide(elements.receivedFileMobileSection);
 
         if (isUrl(data.text)) { show(elements.openLinkMobileBtn); }
         else { hide(elements.openLinkMobileBtn); }
@@ -338,6 +384,15 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
       window.open(lastReceivedFromPC, "_blank");
     }
   });
+
+  // --- Download file mobile ---
+  if (elements.downloadFileMobileBtn) {
+    elements.downloadFileMobileBtn.addEventListener("click", () => {
+      if (lastReceivedFileMobile) {
+        triggerDownloadMobile(lastReceivedFileMobile.data, lastReceivedFileMobile.name, lastReceivedFileMobile.type);
+      }
+    });
+  }
 
   // --- History ---
   let historyOpen = false;

@@ -18,6 +18,8 @@ const translations = {
     clearAll: "Clear All",
     noHistory: "No history yet",
     newRoomBtn: "New Room",
+    photoBtn: "📸 Photo",
+    fileBtn: "📁 File",
     // Dynamic
     qrError: "QR code generation failed",
     connError: "Connection error. Try a new room.",
@@ -47,6 +49,8 @@ const translations = {
     clearAll: "Tümünü Sil",
     noHistory: "Geçmiş boş",
     newRoomBtn: "Yeni Oda",
+    photoBtn: "📸 Fotoğraf",
+    fileBtn: "📁 Dosya",
     // Dynamic
     qrError: "QR kod oluşturulamadı",
     connError: "Bağlantı hatası. Yeni oda açın.",

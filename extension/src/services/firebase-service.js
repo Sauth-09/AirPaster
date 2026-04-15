@@ -68,6 +68,7 @@ export const createFirebaseService = (config) => {
       await set(toMobileRef, {
         ...payload,
         timestamp: Date.now(),
+        _nonce: Math.random().toString(36).slice(2),
       });
     } catch (error) {
       console.error(`[FirebaseService] Send to mobile error:`, error);

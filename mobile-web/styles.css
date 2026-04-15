@@ -558,6 +558,23 @@ body {
   border-radius: var(--radius-sm);
 }
 
+/* --- File Preview --- */
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-sm);
+}
+
+.file-icon { font-size: 24px; }
+.file-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.file-name { font-size: var(--font-size-sm); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.file-size { font-size: var(--font-size-xs); color: var(--text-muted); }
+.image-preview { width: 100%; max-height: 150px; object-fit: contain; border-radius: var(--radius-sm); margin-top: var(--space-sm); }
+
 /* --- History Section (Mobile) --- */
 .history-section-mobile {
   margin-top: var(--space-xl);

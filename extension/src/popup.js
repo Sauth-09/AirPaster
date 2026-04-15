@@ -16,6 +16,7 @@ import { createHistoryService } from "./services/history-service.js";
 import { createCryptoService } from "./services/crypto-service.js";
 import { createI18nService } from "./services/i18n-service.js";
 import { createSessionService } from "./services/session-service.js";
+import { createFileService } from "./services/file-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM References
@@ -41,6 +42,9 @@ const getElements = () => ({
   // Send to mobile
   sendToMobileInput: $("#send-to-mobile-input"),
   sendToMobileBtn: $("#send-to-mobile-btn"),
+  popupFileInput: $("#popup-file-input"),
+  popupFileSending: $("#popup-file-sending"),
+  popupFileSendingText: $("#popup-file-sending-text"),
   // History
   historyToggleBtn: $("#history-toggle-btn"),
   historyCount: $("#history-count"),
@@ -184,6 +188,7 @@ const initApp = async () => {
   const t = i18nService.t;
 
   const sessionService = createSessionService();
+  const fileService = createFileService(t);
 
   let lastReceivedText = "";
   let lastReceivedFile = null;
@@ -338,6 +343,45 @@ const initApp = async () => {
     }
   };
 
+  const handleFileSelectPopup = async (file) => {
+    if (!file || !currentRoomId) {
+      console.warn("[Popup] File select: no file or no room", { file: !!file, currentRoomId });
+      return;
+    }
+
+    console.log("[Popup] File selected:", file.name, file.type, file.size, "bytes");
+    show(elements.popupFileSending);
+    setText(elements.popupFileSendingText, `Sending ${file.name}...`);
+    elements.sendToMobileBtn.disabled = true;
+
+    try {
+      console.log("[Popup] Processing file...");
+      const processedFile = await fileService.processFile(file);
+      console.log("[Popup] File processed:", processedFile.name, processedFile.type, processedFile.size, "bytes, data length:", processedFile.data?.length);
+
+      console.log("[Popup] Encrypting payload...");
+      const payload = await encryptPayload({ file: processedFile });
+      console.log("[Popup] Payload encrypted, keys:", Object.keys(payload));
+
+      console.log("[Popup] Sending to Firebase room:", currentRoomId);
+      await firebaseService.sendToMobile(currentRoomId, payload);
+      console.log("[Popup] ✅ File sent successfully!");
+
+      historyService.addItem(`📎 ${file.name}`, "sent");
+      renderHistory(elements, historyService, clipboardService, t);
+      updateStatus(elements, STATUS.COPIED, "File sent!");
+      setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingMore")), STATUS_DISPLAY_DURATION);
+    } catch (err) {
+      console.error("[Popup] ❌ File send failed:", err);
+      console.error("[Popup] Error details:", err.message, err.stack);
+      updateStatus(elements, STATUS.ERROR, err.message || t("failedToSendToast") || "Failed to send");
+      setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingConnection")), STATUS_DISPLAY_DURATION);
+    } finally {
+      hide(elements.popupFileSending);
+      elements.sendToMobileBtn.disabled = elements.sendToMobileInput.value.trim().length === 0;
+    }
+  };
+
   // --- Event Listeners ---
   on(elements.newRoomBtn, "click", startNewRoom);
 
@@ -368,6 +412,11 @@ const initApp = async () => {
   on(elements.sendToMobileBtn, "click", handleSendToMobile);
   on(elements.sendToMobileInput, "keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); handleSendToMobile(); }
+  });
+
+  on(elements.popupFileInput, "change", (e) => {
+    handleFileSelectPopup(e.target.files[0]);
+    e.target.value = "";
   });
 
   let historyOpen = false;
