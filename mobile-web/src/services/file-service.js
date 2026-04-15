@@ -154,6 +154,7 @@ export const createFileService = (t) => {
     if (mimeType.includes("word") || mimeType.includes("document")) return "📝";
     if (mimeType.includes("sheet") || mimeType.includes("excel")) return "📊";
     if (mimeType.includes("zip") || mimeType.includes("compressed")) return "📦";
+    if (mimeType.startsWith("audio/")) return "🎵";
     if (mimeType.startsWith("text/")) return "📃";
     return "📎";
   };

@@ -15,6 +15,7 @@ import { createClipboardService } from "./services/clipboard-service.js";
 import { createHistoryService } from "./services/history-service.js";
 import { createCryptoService } from "./services/crypto-service.js";
 import { createI18nService } from "./services/i18n-service.js";
+import { createSessionService } from "./services/session-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM References
@@ -182,6 +183,8 @@ const initApp = async () => {
   i18nService.initDom();
   const t = i18nService.t;
 
+  const sessionService = createSessionService();
+
   let lastReceivedText = "";
   let lastReceivedFile = null;
   let currentRoomId = null;
@@ -219,6 +222,8 @@ const initApp = async () => {
   const setupRoom = async (roomId) => {
     currentRoomId = roomId;
     setText(elements.roomId, roomId);
+
+    sessionService.saveSession(roomId, encryptionKeyBase64);
 
     const mobileUrl = roomService.buildMobileUrl(roomId, encryptionKeyBase64);
     try {
@@ -307,6 +312,7 @@ const initApp = async () => {
 
   // --- New room ---
   const startNewRoom = async () => {
+    sessionService.clearSession();
     firebaseService.dispose();
     await setupEncryption();
     const roomId = roomService.generateRoomId();
@@ -377,7 +383,15 @@ const initApp = async () => {
   });
 
   renderHistory(elements, historyService, clipboardService, t);
-  await startNewRoom();
+  
+  const lastSession = sessionService.getSession();
+  if (lastSession) {
+    encryptionKeyBase64 = lastSession.encryptionKeyBase64;
+    encryptionKey = await cryptoService.importKey(encryptionKeyBase64);
+    await setupRoom(lastSession.roomId);
+  } else {
+    await startNewRoom();
+  }
 
   window.addEventListener("unload", () => firebaseService.dispose());
 };
