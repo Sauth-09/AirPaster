@@ -344,36 +344,22 @@ const initApp = async () => {
   };
 
   const handleFileSelectPopup = async (file) => {
-    if (!file || !currentRoomId) {
-      console.warn("[Popup] File select: no file or no room", { file: !!file, currentRoomId });
-      return;
-    }
+    if (!file || !currentRoomId) return;
 
-    console.log("[Popup] File selected:", file.name, file.type, file.size, "bytes");
     show(elements.popupFileSending);
     setText(elements.popupFileSendingText, `Sending ${file.name}...`);
     elements.sendToMobileBtn.disabled = true;
 
     try {
-      console.log("[Popup] Processing file...");
       const processedFile = await fileService.processFile(file);
-      console.log("[Popup] File processed:", processedFile.name, processedFile.type, processedFile.size, "bytes, data length:", processedFile.data?.length);
-
-      console.log("[Popup] Encrypting payload...");
       const payload = await encryptPayload({ file: processedFile });
-      console.log("[Popup] Payload encrypted, keys:", Object.keys(payload));
-
-      console.log("[Popup] Sending to Firebase room:", currentRoomId);
       await firebaseService.sendToMobile(currentRoomId, payload);
-      console.log("[Popup] ✅ File sent successfully!");
-
       historyService.addItem(`📎 ${file.name}`, "sent");
       renderHistory(elements, historyService, clipboardService, t);
       updateStatus(elements, STATUS.COPIED, "File sent!");
       setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingMore")), STATUS_DISPLAY_DURATION);
     } catch (err) {
-      console.error("[Popup] ❌ File send failed:", err);
-      console.error("[Popup] Error details:", err.message, err.stack);
+      console.error("[Popup] File send failed:", err);
       updateStatus(elements, STATUS.ERROR, err.message || t("failedToSendToast") || "Failed to send");
       setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingConnection")), STATUS_DISPLAY_DURATION);
     } finally {
