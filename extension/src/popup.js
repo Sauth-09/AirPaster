@@ -17,6 +17,7 @@ import { createCryptoService } from "./services/crypto-service.js";
 import { createI18nService } from "./services/i18n-service.js";
 import { createSessionService } from "./services/session-service.js";
 import { createFileService } from "./services/file-service.js";
+import { createSettingsService } from "./services/settings-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM References
@@ -148,7 +149,9 @@ const renderHistory = (elements, historyService, clipboardService, t) => {
 // Notifications Helper
 // ---------------------------------------------------------------------------
 
-const showNotification = (title, message) => {
+const showNotification = (title, message, userSettings) => {
+  if (userSettings && userSettings.notificationsEnabled === false) return;
+  
   if (chrome && chrome.notifications) {
     chrome.notifications.create({
       type: "basic",
@@ -189,6 +192,9 @@ const initApp = async () => {
 
   const sessionService = createSessionService();
   const fileService = createFileService(t);
+  const settingsService = createSettingsService();
+  
+  const userSettings = await settingsService.loadSettings();
 
   let lastReceivedText = "";
   let lastReceivedFile = null;
@@ -278,7 +284,7 @@ const initApp = async () => {
         historyService.addItem(`📎 ${f.name}`, "received");
         renderHistory(elements, historyService, clipboardService, t);
         updateStatus(elements, STATUS.COPIED, t("fileReceived"));
-        showNotification("AirPaste", `${t("notifFileReceived")} ${f.name}`);
+        showNotification("AirPaste", `${t("notifFileReceived")} ${f.name}`, userSettings);
       }
 
       // --- Handle text ---
@@ -293,7 +299,7 @@ const initApp = async () => {
 
           const msg = isUrl(text) ? t("linkCopied") : t("copiedClipboard");
           updateStatus(elements, STATUS.COPIED, msg);
-          showNotification("AirPaste", isUrl(text) ? t("notifLinkCopied") : t("notifTextCopied"));
+          showNotification("AirPaste", isUrl(text) ? t("notifLinkCopied") : t("notifTextCopied"), userSettings);
 
           setText(elements.receivedText, text);
           show(elements.receivedSection);
@@ -419,7 +425,7 @@ const initApp = async () => {
 
   renderHistory(elements, historyService, clipboardService, t);
   
-  const lastSession = sessionService.getSession();
+  const lastSession = sessionService.getSession(userSettings);
   if (lastSession) {
     encryptionKeyBase64 = lastSession.encryptionKeyBase64;
     encryptionKey = await cryptoService.importKey(encryptionKeyBase64);

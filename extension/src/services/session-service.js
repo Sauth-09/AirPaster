@@ -17,14 +17,24 @@ export const createSessionService = () => {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   };
 
-  const getSession = () => {
+  const getSession = (settings = {}) => {
     try {
       const stored = localStorage.getItem(SESSION_KEY);
       if (!stored) return null;
 
       const session = JSON.parse(stored);
-      // Expire old sessions
-      if (Date.now() - session.timestamp > SESSION_EXPIRY_MS) {
+      
+      let maxAgeMs = 24 * 60 * 60 * 1000; // default 24 hours
+      switch (settings.roomRetention) {
+        case "session": maxAgeMs = 0; break;
+        case "10m": maxAgeMs = 10 * 60 * 1000; break;
+        case "1h": maxAgeMs = 60 * 60 * 1000; break;
+        case "24h": maxAgeMs = 24 * 60 * 60 * 1000; break;
+        case "always": maxAgeMs = Infinity; break;
+      }
+
+      // Expire old sessions or clear if "session" only
+      if (Date.now() - session.timestamp > maxAgeMs) {
         localStorage.removeItem(SESSION_KEY);
         return null;
       }

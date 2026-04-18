@@ -13,11 +13,18 @@ const SHARED_OPTIONS = {
   logLevel: "info",
 };
 
-const EXTENSION_CONFIG = {
+const EXTENSION_POPUP_CONFIG = {
   ...SHARED_OPTIONS,
   entryPoints: ["extension/src/popup.js"],
   outfile: "extension/dist/popup.bundle.js",
   format: "iife", // Manifest V3 requires IIFE (no ES modules in popup)
+};
+
+const EXTENSION_OPTIONS_CONFIG = {
+  ...SHARED_OPTIONS,
+  entryPoints: ["extension/src/options.js"],
+  outfile: "extension/dist/options.bundle.js",
+  format: "iife",
 };
 
 const MOBILE_CONFIG = {
@@ -36,9 +43,9 @@ const target = args[0] || "all";
 const isWatch = args.includes("--watch");
 
 const configs = {
-  extension: [EXTENSION_CONFIG],
+  extension: [EXTENSION_POPUP_CONFIG, EXTENSION_OPTIONS_CONFIG],
   mobile: [MOBILE_CONFIG],
-  all: [EXTENSION_CONFIG, MOBILE_CONFIG],
+  all: [EXTENSION_POPUP_CONFIG, EXTENSION_OPTIONS_CONFIG, MOBILE_CONFIG],
 };
 
 const selectedConfigs = configs[target];

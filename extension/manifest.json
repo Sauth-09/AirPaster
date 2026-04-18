@@ -19,7 +19,8 @@
   },
   "permissions": [
     "clipboardWrite",
-    "notifications"
+    "notifications",
+    "storage"
   ],
   "host_permissions": [
     "https://*.firebaseio.com/*",
@@ -28,5 +29,6 @@
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  },
+  "options_page": "options.html"
 }
