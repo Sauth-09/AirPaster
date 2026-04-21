@@ -80,14 +80,7 @@ const formatBytes = (bytes) => {
 const escapeHtml = (t) =>
   t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const getFileIcon = (type) => {
-  if (type.startsWith("image/")) return "🖼️";
-  if (type === "application/pdf") return "📄";
-  if (type.includes("word") || type.includes("document")) return "📝";
-  if (type.includes("sheet") || type.includes("excel")) return "📊";
-  if (type.includes("zip")) return "📦";
-  return "📎";
-};
+// Icons are now handled by fileService.getFileIcon() for better modularity.
 
 // ---------------------------------------------------------------------------
 // UI State
@@ -267,7 +260,7 @@ const initApp = async () => {
         const f = data.file;
         lastReceivedFile = f;
 
-        setText(elements.fileIcon, getFileIcon(f.type));
+        setText(elements.fileIcon, fileService.getFileIcon(f.type));
         setText(elements.fileName, f.name);
         setText(elements.fileSize, formatBytes(f.size));
 

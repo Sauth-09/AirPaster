@@ -4,7 +4,7 @@
 // Handles camera/gallery photos and document files for transfer.
 // ---------------------------------------------------------------------------
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_IMAGE_WIDTH = 1200;
 const IMAGE_QUALITY = 0.8;
 
@@ -153,7 +153,9 @@ export const createFileService = (t) => {
     if (mimeType === "application/pdf") return "📄";
     if (mimeType.includes("word") || mimeType.includes("document")) return "📝";
     if (mimeType.includes("sheet") || mimeType.includes("excel")) return "📊";
-    if (mimeType.includes("zip") || mimeType.includes("compressed")) return "📦";
+    if (mimeType.includes("presentation") || mimeType.includes("powerpoint")) return "📉";
+    if (mimeType.includes("zip") || mimeType.includes("compressed") || mimeType.includes("tar") || mimeType.includes("rar")) return "📦";
+    if (mimeType.startsWith("video/")) return "🎬";
     if (mimeType.startsWith("audio/")) return "🎵";
     if (mimeType.startsWith("text/")) return "📃";
     return "📎";
