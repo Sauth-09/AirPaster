@@ -48,6 +48,7 @@ const translations = {
     notifFileReceived: "📎 File received:",
     notifLinkCopied: "🔗 Link copied to clipboard",
     notifTextCopied: "📋 Text copied to clipboard",
+    fileSending: "Sending {filename}...",
     // P2P WebRTC
     p2pReceiving: "Receiving P2P...",
     p2pReceivingPercent: "Receiving: {percent}%",
@@ -100,6 +101,7 @@ const translations = {
     notifFileReceived: "📎 Dosya alındı:",
     notifLinkCopied: "🔗 Link kopyalandı",
     notifTextCopied: "📋 Metin kopyalandı",
+    fileSending: "{filename} gönderiliyor...",
     // P2P WebRTC
     p2pReceiving: "P2P bağlantı alınıyor...",
     p2pReceivingPercent: "Alınıyor: %{percent}",

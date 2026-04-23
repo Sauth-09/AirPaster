@@ -421,7 +421,7 @@ const initApp = async () => {
     if (!file || !currentRoomId) return;
 
     show(elements.popupFileSending);
-    setText(elements.popupFileSendingText, `Sending ${file.name}...`);
+    setText(elements.popupFileSendingText, t("fileSending", { filename: file.name }));
     elements.sendToMobileBtn.disabled = true;
 
     try {
