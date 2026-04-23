@@ -13,11 +13,16 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
   let fileMeta = null;
   let resolveSend = null;
 
-  const CHUNK_SIZE = 64 * 1024; // 64 KB
+  // 16 KB is the safest chunk size across all browsers to prevent SCTP message size aborts
+  const CHUNK_SIZE = 16 * 1024;
 
   const createPeerConnection = () => {
     peerConnection = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" }
+      ],
     });
 
     peerConnection.oniceconnectionstatechange = () => {
