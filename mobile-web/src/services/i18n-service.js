@@ -61,7 +61,13 @@ const translations = {
     noShareDataDesc: "Open this app from your phone's share menu to send content.",
     // PWA
     installPWA: "Install App",
-    fileReceivedLabel: "📎 File Received"
+    fileReceivedLabel: "📎 File Received",
+    // P2P WebRTC
+    p2pReceiving: "Receiving P2P...",
+    p2pReceivingPercent: "Receiving: {percent}%",
+    p2pTransferFailed: "P2P transfer failed",
+    p2pSendingPercent: "Sending: {percent}%",
+    p2pConnecting: "Connecting P2P..."
   },
   tr: {
     tagline: "Bilgisayarına anında gönder",
@@ -121,7 +127,13 @@ const translations = {
     noShareDataDesc: "İçerik göndermek için telefonunuzun paylaşım menüsünden bu uygulamayı açın.",
     // PWA
     installPWA: "Uygulamayı Yükle",
-    fileReceivedLabel: "📎 Dosya Alındı"
+    fileReceivedLabel: "📎 Dosya Alındı",
+    // P2P WebRTC
+    p2pReceiving: "P2P bağlantı alınıyor...",
+    p2pReceivingPercent: "Alınıyor: %{percent}",
+    p2pTransferFailed: "P2P transferi başarısız oldu",
+    p2pSendingPercent: "Gönderiliyor: %{percent}",
+    p2pConnecting: "P2P Bağlanıyor..."
   }
 };
 

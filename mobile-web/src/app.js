@@ -16,6 +16,7 @@ import { createFileService } from "./services/file-service.js";
 import { createSessionService } from "./services/session-service.js";
 import { createI18nService } from "./services/i18n-service.js";
 import { createQRScannerService } from "./services/qr-scanner-service.js";
+import { createWebRTCService } from "./services/webrtc-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM Helpers
@@ -212,6 +213,8 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
   let encryptionKey = null;
   let lastReceivedFromPC = "";
   let lastReceivedFileMobile = null;
+  let webrtcService = null;
+  let currentFileToSend = null;
 
   // Save session for reconnect
   sessionService.saveSession(roomId, keyBase64);
@@ -294,6 +297,30 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
     setText(elements.fileSendingText, t("fileSending", { filename: file.name }));
 
     try {
+      if (file.size > 10 * 1024 * 1024) {
+        // P2P WebRTC Transfer for > 10MB
+        webrtcService = createWebRTCService(
+          (progress) => {
+            setText(elements.fileSendingText, t("p2pSendingPercent", { percent: Math.round(progress * 100) }));
+          },
+          () => {}, // Resolved by sendFile promise
+          (err) => {
+            console.error("[WebRTC] Error:", err);
+            showToast(elements, t("p2pTransferFailed"), "error");
+            hide(elements.fileSending);
+          }
+        );
+        currentFileToSend = file;
+        const offerSdp = await webrtcService.createOffer({ name: file.name, size: file.size, type: file.type });
+        const payload = await encryptPayload({
+          webrtc: { type: "offer", sdp: offerSdp, fileMeta: { name: file.name, size: file.size, type: file.type } }
+        });
+        await firebaseService.sendToRoom(roomId, payload);
+        setText(elements.fileSendingText, t("p2pConnecting"));
+        return; // UI completes when answer received
+      }
+
+      // Normal Firebase Transfer for <= 10MB
       const processedFile = await fileService.processFile(file);
       const payload = await encryptPayload({ file: processedFile });
       await firebaseService.sendToRoom(roomId, payload);
@@ -304,7 +331,9 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
       console.error("[App] File send failed:", err);
       showToast(elements, err.message || t("failedToSendToast"), "error");
     } finally {
-      hide(elements.fileSending);
+      if (file.size <= 10 * 1024 * 1024) {
+        hide(elements.fileSending);
+      }
     }
   };
 
@@ -328,6 +357,69 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
 
       const data = await decryptPayload(rawData);
       if (!data) { showToast(elements, t("decryptFailedToast"), "error"); return; }
+
+      // --- Handle WebRTC Signaling ---
+      if (data.webrtc) {
+        if (data.webrtc.type === "offer") {
+          show(elements.fileSending);
+          setText(elements.fileSendingText, t("p2pReceiving"));
+          
+          webrtcService = createWebRTCService(
+            (progress) => {
+              setText(elements.fileSendingText, t("p2pReceivingPercent", { percent: Math.round(progress * 100) }));
+            },
+            async (blob, meta) => {
+              hide(elements.fileSending);
+              const url = URL.createObjectURL(blob);
+              lastReceivedFileMobile = { name: meta.name, size: meta.size, type: meta.type, url: url, isBlob: true };
+
+              setText(elements.mobileFileIcon, fileService.getFileIcon(meta.type));
+              setText(elements.mobileFileName, meta.name);
+              setText(elements.mobileFileSize, formatBytes(meta.size));
+
+              if (meta.type.startsWith("image/")) {
+                elements.mobileImagePreview.src = url;
+                show(elements.mobileImagePreview);
+              } else {
+                hide(elements.mobileImagePreview);
+              }
+
+              show(elements.receivedFileMobileSection);
+              hide(elements.receivedFromPC);
+
+              historyService.addItem(`📎 ${meta.name} (P2P)`, "received");
+              renderHistory(elements, historyService, t);
+              showToast(elements, t("fileSentToast", { filename: meta.name }) || "File received", "success");
+              
+              webrtcService.dispose();
+            },
+            (err) => {
+              console.error("[WebRTC] Error:", err);
+              hide(elements.fileSending);
+              showToast(elements, t("p2pTransferFailed"), "error");
+            }
+          );
+
+          const answerSdp = await webrtcService.handleOffer(data.webrtc.sdp, data.webrtc.fileMeta);
+          await firebaseService.sendToRoom(roomId, await encryptPayload({ webrtc: { type: "answer", sdp: answerSdp } }));
+        } else if (data.webrtc.type === "answer") {
+          await webrtcService.setAnswer(data.webrtc.sdp);
+          try {
+            await webrtcService.sendFile(currentFileToSend);
+            historyService.addItem(`📎 ${currentFileToSend.name} (P2P)`, "sent");
+            renderHistory(elements, historyService, t);
+            showToast(elements, t("fileSentToast", { filename: currentFileToSend.name }), "success");
+          } catch (err) {
+            console.error("[WebRTC] Send failed:", err);
+            showToast(elements, t("p2pTransferFailed"), "error");
+          }
+          hide(elements.fileSending);
+          webrtcService.dispose();
+        }
+
+        try { await firebaseService.clearToMobile(roomId); } catch {}
+        return;
+      }
 
       if (data.file) {
         const f = data.file;
@@ -396,7 +488,16 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
   if (elements.downloadFileMobileBtn) {
     elements.downloadFileMobileBtn.addEventListener("click", () => {
       if (lastReceivedFileMobile) {
-        triggerDownloadMobile(lastReceivedFileMobile.data, lastReceivedFileMobile.name, lastReceivedFileMobile.type);
+        if (lastReceivedFileMobile.isBlob) {
+          const link = document.createElement("a");
+          link.href = lastReceivedFileMobile.url;
+          link.download = lastReceivedFileMobile.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          triggerDownloadMobile(lastReceivedFileMobile.data, lastReceivedFileMobile.name, lastReceivedFileMobile.type);
+        }
       }
     });
   }

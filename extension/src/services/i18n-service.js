@@ -48,6 +48,12 @@ const translations = {
     notifFileReceived: "📎 File received:",
     notifLinkCopied: "🔗 Link copied to clipboard",
     notifTextCopied: "📋 Text copied to clipboard",
+    // P2P WebRTC
+    p2pReceiving: "Receiving P2P...",
+    p2pReceivingPercent: "Receiving: {percent}%",
+    p2pTransferFailed: "P2P transfer failed",
+    p2pSendingPercent: "Sending: {percent}%",
+    p2pConnecting: "Connecting P2P...",
   },
   tr: {
     tagline: "QR Okut · Gönder · Bitti",
@@ -94,6 +100,12 @@ const translations = {
     notifFileReceived: "📎 Dosya alındı:",
     notifLinkCopied: "🔗 Link kopyalandı",
     notifTextCopied: "📋 Metin kopyalandı",
+    // P2P WebRTC
+    p2pReceiving: "P2P bağlantı alınıyor...",
+    p2pReceivingPercent: "Alınıyor: %{percent}",
+    p2pTransferFailed: "P2P transferi başarısız oldu",
+    p2pSendingPercent: "Gönderiliyor: %{percent}",
+    p2pConnecting: "P2P Bağlanıyor...",
   }
 };
 
@@ -109,9 +121,16 @@ export const createI18nService = () => {
   /**
    * Get translation for a key
    * @param {string} key 
+   * @param {Object} [vars]
    * @returns {string}
    */
-  const t = (key) => tDict[key] || translations["en"][key] || key;
+  const t = (key, vars = {}) => {
+    let text = tDict[key] || translations["en"][key] || key;
+    for (const [k, v] of Object.entries(vars)) {
+      text = text.replace(`{${k}}`, v);
+    }
+    return text;
+  };
 
   /**
    * Initialize translations on the DOM

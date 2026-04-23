@@ -18,6 +18,7 @@ import { createI18nService } from "./services/i18n-service.js";
 import { createSessionService } from "./services/session-service.js";
 import { createFileService } from "./services/file-service.js";
 import { createSettingsService } from "./services/settings-service.js";
+import { createWebRTCService } from "./services/webrtc-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM References
@@ -194,6 +195,8 @@ const initApp = async () => {
   let currentRoomId = null;
   let encryptionKey = null;
   let encryptionKeyBase64 = null;
+  let webrtcService = null;
+  let currentFileToSend = null;
 
   // --- Generate encryption key ---
   const setupEncryption = async () => {
@@ -252,6 +255,72 @@ const initApp = async () => {
       const data = await decryptPayload(rawData);
       if (!data) {
         updateStatus(elements, STATUS.ERROR, t("decryptError"));
+        return;
+      }
+
+      // --- Handle WebRTC Signaling ---
+      if (data.webrtc) {
+        if (data.webrtc.type === "offer") {
+          show(elements.popupFileSending);
+          setText(elements.popupFileSendingText, t("p2pReceiving"));
+          
+          webrtcService = createWebRTCService(
+            (progress) => {
+              setText(elements.popupFileSendingText, t("p2pReceivingPercent", { percent: Math.round(progress * 100) }));
+            },
+            async (blob, meta) => {
+              hide(elements.popupFileSending);
+              const url = URL.createObjectURL(blob);
+              lastReceivedFile = { name: meta.name, size: meta.size, type: meta.type, url: url, isBlob: true };
+              
+              setText(elements.fileIcon, fileService.getFileIcon(meta.type));
+              setText(elements.fileName, meta.name);
+              setText(elements.fileSize, formatBytes(meta.size));
+
+              if (meta.type.startsWith("image/")) {
+                elements.imagePreview.src = url;
+                show(elements.imagePreview);
+              } else {
+                hide(elements.imagePreview);
+              }
+
+              show(elements.receivedFileSection);
+              hide(elements.receivedSection);
+
+              historyService.addItem(`📎 ${meta.name} (P2P)`, "received");
+              renderHistory(elements, historyService, clipboardService, t);
+              updateStatus(elements, STATUS.COPIED, t("fileReceived"));
+              showNotification("AirPaste", `${t("notifFileReceived")} ${meta.name}`, userSettings);
+              
+              webrtcService.dispose();
+            },
+            (err) => {
+              console.error("[WebRTC] Error:", err);
+              hide(elements.popupFileSending);
+              updateStatus(elements, STATUS.ERROR, t("p2pTransferFailed"));
+            }
+          );
+
+          const answerSdp = await webrtcService.handleOffer(data.webrtc.sdp, data.webrtc.fileMeta);
+          await firebaseService.sendToMobile(roomId, await encryptPayload({ webrtc: { type: "answer", sdp: answerSdp } }));
+        } else if (data.webrtc.type === "answer") {
+          await webrtcService.setAnswer(data.webrtc.sdp);
+          try {
+            await webrtcService.sendFile(currentFileToSend);
+            historyService.addItem(`📎 ${currentFileToSend.name} (P2P)`, "sent");
+            renderHistory(elements, historyService, clipboardService, t);
+            updateStatus(elements, STATUS.COPIED, "File sent!");
+            setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingMore")), STATUS_DISPLAY_DURATION);
+          } catch (err) {
+            console.error("[WebRTC] Send failed:", err);
+            updateStatus(elements, STATUS.ERROR, t("p2pTransferFailed"));
+          }
+          hide(elements.popupFileSending);
+          elements.sendToMobileBtn.disabled = elements.sendToMobileInput.value.trim().length === 0;
+          webrtcService.dispose();
+        }
+
+        try { await firebaseService.clearRoom(roomId); } catch {}
         return;
       }
 
@@ -350,6 +419,31 @@ const initApp = async () => {
     elements.sendToMobileBtn.disabled = true;
 
     try {
+      if (file.size > 10 * 1024 * 1024) {
+        // P2P WebRTC Transfer for > 10MB
+        webrtcService = createWebRTCService(
+          (progress) => {
+            setText(elements.popupFileSendingText, t("p2pSendingPercent", { percent: Math.round(progress * 100) }));
+          },
+          () => {}, // Resolved by sendFile promise
+          (err) => {
+            console.error("[WebRTC] Error:", err);
+            updateStatus(elements, STATUS.ERROR, t("p2pTransferFailed"));
+            hide(elements.popupFileSending);
+            elements.sendToMobileBtn.disabled = elements.sendToMobileInput.value.trim().length === 0;
+          }
+        );
+        currentFileToSend = file;
+        const offerSdp = await webrtcService.createOffer({ name: file.name, size: file.size, type: file.type });
+        const payload = await encryptPayload({
+          webrtc: { type: "offer", sdp: offerSdp, fileMeta: { name: file.name, size: file.size, type: file.type } }
+        });
+        await firebaseService.sendToMobile(currentRoomId, payload);
+        setText(elements.popupFileSendingText, t("p2pConnecting"));
+        return; // UI logic completes when answer is received
+      }
+
+      // Normal Firebase Transfer for <= 10MB
       const processedFile = await fileService.processFile(file);
       const payload = await encryptPayload({ file: processedFile });
       await firebaseService.sendToMobile(currentRoomId, payload);
@@ -362,8 +456,11 @@ const initApp = async () => {
       updateStatus(elements, STATUS.ERROR, err.message || t("failedToSendToast") || "Failed to send");
       setTimeout(() => updateStatus(elements, STATUS.WAITING, t("waitingConnection")), STATUS_DISPLAY_DURATION);
     } finally {
-      hide(elements.popupFileSending);
-      elements.sendToMobileBtn.disabled = elements.sendToMobileInput.value.trim().length === 0;
+      // For WebRTC we hide this later when transfer finishes
+      if (file.size <= 10 * 1024 * 1024) {
+        hide(elements.popupFileSending);
+        elements.sendToMobileBtn.disabled = elements.sendToMobileInput.value.trim().length === 0;
+      }
     }
   };
 
@@ -387,7 +484,16 @@ const initApp = async () => {
 
   on(elements.downloadFileBtn, "click", () => {
     if (lastReceivedFile) {
-      triggerDownload(lastReceivedFile.data, lastReceivedFile.name, lastReceivedFile.type);
+      if (lastReceivedFile.isBlob) {
+        const link = document.createElement("a");
+        link.href = lastReceivedFile.url;
+        link.download = lastReceivedFile.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        triggerDownload(lastReceivedFile.data, lastReceivedFile.name, lastReceivedFile.type);
+      }
     }
   });
 
