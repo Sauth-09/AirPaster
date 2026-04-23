@@ -139,43 +139,64 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
    */
   const sendFile = (file) => {
     return new Promise((resolve, reject) => {
-      if (!dataChannel || dataChannel.readyState !== "open") {
-        return reject(new Error("DataChannel not open"));
+      if (!dataChannel) {
+        return reject(new Error("DataChannel does not exist"));
       }
 
-      let offset = 0;
-      const reader = new FileReader();
+      const startSending = () => {
+        let offset = 0;
+        const reader = new FileReader();
 
-      const readSlice = (o) => {
-        const slice = file.slice(offset, o + CHUNK_SIZE);
-        reader.readAsArrayBuffer(slice);
-      };
+        const readSlice = (o) => {
+          const slice = file.slice(offset, o + CHUNK_SIZE);
+          reader.readAsArrayBuffer(slice);
+        };
 
-      reader.onload = (e) => {
-        dataChannel.send(e.target.result);
-        offset += e.target.result.byteLength;
-        onProgress(offset / file.size);
-
-        if (offset < file.size) {
-          // Respect buffer limits to avoid memory bloat/crashes
-          if (dataChannel.bufferedAmount > 1024 * 1024) { // 1MB threshold
-            dataChannel.onbufferedamountlow = () => {
-              dataChannel.onbufferedamountlow = null;
-              readSlice(offset);
-            };
-          } else {
-            readSlice(offset);
+        reader.onload = (e) => {
+          if (dataChannel.readyState !== "open") {
+            return reject(new Error("DataChannel closed during transfer"));
           }
-        } else {
-          dataChannel.send("EOF");
-          resolve();
-        }
+          dataChannel.send(e.target.result);
+          offset += e.target.result.byteLength;
+          onProgress(offset / file.size);
+
+          if (offset < file.size) {
+            // Respect buffer limits to avoid memory bloat/crashes
+            if (dataChannel.bufferedAmount > 1024 * 1024) { // 1MB threshold
+              dataChannel.onbufferedamountlow = () => {
+                dataChannel.onbufferedamountlow = null;
+                readSlice(offset);
+              };
+            } else {
+              readSlice(offset);
+            }
+          } else {
+            dataChannel.send("EOF");
+            resolve();
+          }
+        };
+
+        reader.onerror = () => reject(reader.error);
+
+        dataChannel.bufferedAmountLowThreshold = 512 * 1024; // 512 KB
+        readSlice(0);
       };
 
-      reader.onerror = () => reject(reader.error);
-
-      dataChannel.bufferedAmountLowThreshold = 512 * 1024; // 512 KB
-      readSlice(0);
+      if (dataChannel.readyState === "open") {
+        startSending();
+      } else {
+        const handleOpen = () => {
+          dataChannel.removeEventListener("open", handleOpen);
+          startSending();
+        };
+        const handleFail = () => {
+          dataChannel.removeEventListener("open", handleOpen);
+          reject(new Error("DataChannel failed to open"));
+        };
+        dataChannel.addEventListener("open", handleOpen);
+        dataChannel.addEventListener("close", handleFail);
+        dataChannel.addEventListener("error", handleFail);
+      }
     });
   };
 
