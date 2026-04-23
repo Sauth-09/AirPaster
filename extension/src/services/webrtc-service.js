@@ -11,6 +11,7 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
   let receiveBuffer = [];
   let receivedSize = 0;
   let fileMeta = null;
+  let resolveSend = null;
 
   const CHUNK_SIZE = 64 * 1024; // 64 KB
 
@@ -41,6 +42,8 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
     dataChannel.onmessage = (event) => {
       if (typeof event.data === "string") {
         if (event.data === "EOF") {
+          // Send ACK back so sender knows we got it
+          dataChannel.send("ACK");
           // File transfer complete
           const blob = new Blob(receiveBuffer, {
             type: fileMeta?.type || "application/octet-stream",
@@ -48,6 +51,11 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
           receiveBuffer = [];
           receivedSize = 0;
           onComplete(blob, fileMeta);
+        } else if (event.data === "ACK") {
+          if (resolveSend) {
+            resolveSend();
+            resolveSend = null;
+          }
         }
       } else {
         // Receiving binary chunk
@@ -86,11 +94,18 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
       if (peerConnection.iceGatheringState === "complete") {
         resolve({ type: peerConnection.localDescription.type, sdp: peerConnection.localDescription.sdp });
       } else {
-        peerConnection.onicegatheringstatechange = () => {
+        const checkState = () => {
           if (peerConnection.iceGatheringState === "complete") {
+            peerConnection.removeEventListener("icegatheringstatechange", checkState);
+            clearTimeout(timeout);
             resolve({ type: peerConnection.localDescription.type, sdp: peerConnection.localDescription.sdp });
           }
         };
+        peerConnection.addEventListener("icegatheringstatechange", checkState);
+        const timeout = setTimeout(() => {
+          peerConnection.removeEventListener("icegatheringstatechange", checkState);
+          resolve({ type: peerConnection.localDescription.type, sdp: peerConnection.localDescription.sdp });
+        }, 1500);
       }
     });
   };
@@ -124,11 +139,18 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
       if (peerConnection.iceGatheringState === "complete") {
         resolve({ type: peerConnection.localDescription.type, sdp: peerConnection.localDescription.sdp });
       } else {
-        peerConnection.onicegatheringstatechange = () => {
+        const checkState = () => {
           if (peerConnection.iceGatheringState === "complete") {
+            peerConnection.removeEventListener("icegatheringstatechange", checkState);
+            clearTimeout(timeout);
             resolve({ type: peerConnection.localDescription.type, sdp: peerConnection.localDescription.sdp });
           }
         };
+        peerConnection.addEventListener("icegatheringstatechange", checkState);
+        const timeout = setTimeout(() => {
+          peerConnection.removeEventListener("icegatheringstatechange", checkState);
+          resolve({ type: peerConnection.localDescription.type, sdp: peerConnection.localDescription.sdp });
+        }, 1500);
       }
     });
   };
@@ -172,7 +194,7 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
             }
           } else {
             dataChannel.send("EOF");
-            resolve();
+            resolveSend = resolve;
           }
         };
 
@@ -186,11 +208,11 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
         startSending();
       } else {
         const handleOpen = () => {
-          dataChannel.removeEventListener("open", handleOpen);
+          if (dataChannel) dataChannel.removeEventListener("open", handleOpen);
           startSending();
         };
         const handleFail = () => {
-          dataChannel.removeEventListener("open", handleOpen);
+          if (dataChannel) dataChannel.removeEventListener("open", handleOpen);
           reject(new Error("DataChannel failed to open"));
         };
         dataChannel.addEventListener("open", handleOpen);
