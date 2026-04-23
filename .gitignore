@@ -36,6 +36,9 @@ jspm_packages/
 .DS_Store
 Thumbs.db
 
+push.bat
+
+
 # Private config files (like firebase config if it has keys, but for client side it often is public. Still good to abstract if possible)
 # Note: For chrome extensions, often the final built folder is what users load. 
 # We will ignore the generated dist/ folders to keep the repo clean.

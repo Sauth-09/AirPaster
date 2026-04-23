@@ -18,6 +18,8 @@ import { createSessionService } from "./services/session-service.js";
 import { createShareCacheService } from "./services/share-cache-service.js";
 import { createQRScannerService } from "./services/qr-scanner-service.js";
 import { createI18nService } from "./services/i18n-service.js";
+import { createWebRTCService } from "./services/webrtc-service.js";
+import { createFileService } from "./services/file-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM Helpers
@@ -111,6 +113,8 @@ const sendSharedData = async (elements, sharedData, roomId, keyBase64, t) => {
   const firebaseService = createFirebaseService(FIREBASE_CONFIG);
   const cryptoService = createCryptoService();
   const sessionService = createSessionService();
+  const fileService = createFileService(t);
+  let webrtcService = null;
 
   try {
     // Setup encryption
@@ -126,13 +130,84 @@ const sendSharedData = async (elements, sharedData, roomId, keyBase64, t) => {
       return { encrypted: true, data, iv };
     };
 
+    const decryptPayload = async (data) => {
+      if (!encryptionKey || !data.encrypted) return data;
+      try {
+        const decryptedText = await cryptoService.decrypt(encryptionKey, data.data, data.iv);
+        return JSON.parse(decryptedText);
+      } catch (err) {
+        console.error("Decryption failed:", err);
+        return null;
+      }
+    };
+
     // Save session
     sessionService.saveSession(roomId, keyBase64);
 
     // Prepare and send data
     if (sharedData.file) {
+      if (sharedData.file.size > 10 * 1024 * 1024) {
+        // WEBRTC Transfer
+        webrtcService = createWebRTCService(
+          (progress) => {
+            setText(elements.sendingText, t("p2pSendingPercent", { percent: Math.round(progress * 100) }));
+          },
+          () => {}, // Resolved by sendFile promise
+          (err) => {
+            console.error("[WebRTC] Error:", err);
+            hide(elements.sendingProgress);
+            show(elements.sendError);
+            setText(elements.errorDesc, t("p2pTransferFailed"));
+          }
+        );
+
+        firebaseService.listenToMobile(roomId, async (rawData, error) => {
+          if (error || !rawData) return;
+          const data = await decryptPayload(rawData);
+          if (!data || !data.webrtc) return;
+
+          if (data.webrtc.type === "answer") {
+            if (!webrtcService) {
+              try { await firebaseService.clearToMobile(roomId); } catch {}
+              return;
+            }
+            await webrtcService.setAnswer(data.webrtc.sdp);
+            try {
+              await webrtcService.sendFile(sharedData.file);
+              
+              // Success!
+              hide(elements.sendingProgress);
+              show(elements.sendSuccess);
+              
+              const shareCacheService = createShareCacheService();
+              await shareCacheService.clearSharedData();
+            } catch (err) {
+              console.error("[WebRTC] Send failed:", err);
+              hide(elements.sendingProgress);
+              show(elements.sendError);
+              setText(elements.errorDesc, t("p2pTransferFailed"));
+            }
+            webrtcService.dispose();
+            webrtcService = null;
+          }
+          try { await firebaseService.clearToMobile(roomId); } catch {}
+        });
+
+        const offerSdp = await webrtcService.createOffer({ name: sharedData.file.name, size: sharedData.file.size, type: sharedData.file.type });
+        const payload = await encryptPayload({
+          webrtc: { type: "offer", sdp: offerSdp, fileMeta: { name: sharedData.file.name, size: sharedData.file.size, type: sharedData.file.type } }
+        });
+        await firebaseService.sendToRoom(roomId, payload);
+        setText(elements.sendingText, t("p2pConnecting"));
+
+        // Do not dispose firebase immediately; wait for answer
+        return;
+      }
+
+      // Normal Firebase Transfer
       setText(elements.sendingText, t("fileSending", { filename: sharedData.file.name }));
-      const payload = await encryptPayload({ file: sharedData.file });
+      const processedFile = await fileService.processFile(sharedData.file);
+      const payload = await encryptPayload({ file: processedFile });
       await firebaseService.sendToRoom(roomId, payload);
     } else {
       const text = sharedData.text || sharedData.url || sharedData.title || "";
@@ -143,7 +218,7 @@ const sendSharedData = async (elements, sharedData, roomId, keyBase64, t) => {
       await firebaseService.sendToRoom(roomId, payload);
     }
 
-    // Show success
+    // Show success for non-WebRTC routes
     hide(elements.sendingProgress);
     show(elements.sendSuccess);
 

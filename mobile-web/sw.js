@@ -72,6 +72,20 @@ self.addEventListener("fetch", (event) => {
 });
 
 // ---------------------------------------------------------------------------
+// IndexedDB Helper
+// ---------------------------------------------------------------------------
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("AirPasteShareDB", 1);
+    request.onupgradeneeded = (e) => {
+      e.target.result.createObjectStore("share");
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Share Target Handler
 // ---------------------------------------------------------------------------
 async function handleShareTarget(request) {
@@ -96,26 +110,18 @@ async function handleShareTarget(request) {
       );
 
       if (validFiles.length > 0) {
-        const file = validFiles[0]; // Take the first file
-        const arrayBuffer = await file.arrayBuffer();
-        const base64 = arrayBufferToBase64(arrayBuffer);
-
-        sharedData.file = {
-          name: file.name,
-          type: file.type || "application/octet-stream",
-          size: file.size,
-          data: base64,
-        };
+        sharedData.file = validFiles[0]; // Store the native File object
       }
     }
 
-    // Store shared data in a special cache for the share-target page to read
-    const cache = await caches.open("airpaste-share");
-    const blob = new Blob([JSON.stringify(sharedData)], {
-      type: "application/json",
+    // Store shared data in IndexedDB
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("share", "readwrite");
+      tx.objectStore("share").put(sharedData, "shared-data");
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
     });
-    const response = new Response(blob);
-    await cache.put("shared-data", response);
 
     // Redirect to share-target.html (GET) so the page can process the data
     return Response.redirect("./share-target.html", 303);
@@ -123,18 +129,4 @@ async function handleShareTarget(request) {
     console.error("[SW] Share target error:", error);
     return Response.redirect("./share-target.html?error=1", 303);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode.apply(null, chunk);
-  }
-  return btoa(binary);
 }
