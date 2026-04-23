@@ -4,7 +4,7 @@
 // Handles camera/gallery photos and document files for transfer.
 // ---------------------------------------------------------------------------
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_IMAGE_WIDTH = 1200;
 const IMAGE_QUALITY = 0.8;
 
@@ -24,7 +24,7 @@ export const createFileService = (t) => {
     }
     if (file.size > MAX_FILE_SIZE) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-      return { valid: false, message: (t ? t("fileTooLarge", { size: sizeMB }) : `File too large (${sizeMB}MB). Max 2MB.`) };
+      return { valid: false, message: (t ? t("fileTooLarge", { size: sizeMB }) : `File too large (${sizeMB}MB). Max 10MB.`) };
     }
     return { valid: true };
   };
@@ -131,7 +131,7 @@ export const createFileService = (t) => {
     // Final safety check for the resulting data size
     if (size > MAX_FILE_SIZE) {
        const sizeMB = (size / (1024 * 1024)).toFixed(1);
-       const msg = t ? t("fileStillTooLarge", { size: sizeMB }) : `File is still too large (${sizeMB}MB) even after processing. Max 2MB.`;
+       const msg = t ? t("fileStillTooLarge", { size: sizeMB }) : `File is still too large (${sizeMB}MB) even after processing. Max 10MB.`;
        throw new Error(msg);
     }
 

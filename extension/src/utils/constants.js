@@ -18,11 +18,12 @@ export const ROOM_ID_LENGTH_RIGHT = 3;
 
 /** QR Code generation options */
 export const QR_OPTIONS = {
-  width: 200,
-  margin: 2,
+  width: 280,
+  margin: 3,
+  errorCorrectionLevel: "H",
   color: {
-    dark: "#e0e0e0",
-    light: "#00000000", // transparent background
+    dark: "#000000",
+    light: "#ffffff",
   },
 };
 

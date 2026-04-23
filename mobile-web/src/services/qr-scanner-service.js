@@ -63,7 +63,7 @@ export const createQRScannerService = () => {
 
         const imageData = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "dontInvert",
+          inversionAttempts: "attemptBoth",
         });
 
         if (code && code.data && code.data !== lastResult) {

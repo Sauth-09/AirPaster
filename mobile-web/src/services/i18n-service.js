@@ -37,8 +37,8 @@ const translations = {
     decryptFailedToast: "Decryption failed",
     receivedFromPctoast: "Received from computer!",
     noFileSelected: "No file selected",
-    fileTooLarge: "File too large ({size}MB). Max 2MB.",
-    fileStillTooLarge: "File is still too large ({size}MB) even after processing. Max 2MB.",
+    fileTooLarge: "File too large ({size}MB). Max 10MB.",
+    fileStillTooLarge: "File is still too large ({size}MB) even after processing. Max 10MB.",
     // QR Scanner
     scanQRBtn: "📷 Scan QR Code",
     scanQRHint: "Point camera at the QR code on your computer",
@@ -97,8 +97,8 @@ const translations = {
     decryptFailedToast: "Şifre çözülemedi",
     receivedFromPctoast: "Bilgisayardan veri geldi!",
     noFileSelected: "Dosya seçilmedi",
-    fileTooLarge: "Dosya çok büyük ({size}MB). Maks 2MB.",
-    fileStillTooLarge: "Dosya sıkıştırıldıktan sonra bile çok büyük ({size}MB). Maks 2MB.",
+    fileTooLarge: "Dosya çok büyük ({size}MB). Maks 10MB.",
+    fileStillTooLarge: "Dosya sıkıştırıldıktan sonra bile çok büyük ({size}MB). Maks 10MB.",
     // QR Scanner
     scanQRBtn: "📷 QR Kodu Tara",
     scanQRHint: "Kamerayı bilgisayarınızdaki QR koda tutun",
