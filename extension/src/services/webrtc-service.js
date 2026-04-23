@@ -44,13 +44,16 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
         if (event.data === "EOF") {
           // Send ACK back so sender knows we got it
           dataChannel.send("ACK");
-          // File transfer complete
-          const blob = new Blob(receiveBuffer, {
-            type: fileMeta?.type || "application/octet-stream",
-          });
-          receiveBuffer = [];
-          receivedSize = 0;
-          onComplete(blob, fileMeta);
+          // Wait briefly to ensure the ACK is actually sent over the network 
+          // before the UI receives 'onComplete' and immediately calls dispose()
+          setTimeout(() => {
+            const blob = new Blob(receiveBuffer, {
+              type: fileMeta?.type || "application/octet-stream",
+            });
+            receiveBuffer = [];
+            receivedSize = 0;
+            onComplete(blob, fileMeta);
+          }, 500);
         } else if (event.data === "ACK") {
           if (resolveSend) {
             resolveSend();
@@ -208,12 +211,18 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
         startSending();
       } else {
         const handleOpen = () => {
-          if (dataChannel) dataChannel.removeEventListener("open", handleOpen);
+          if (dataChannel) {
+             dataChannel.removeEventListener("open", handleOpen);
+          }
           startSending();
         };
         const handleFail = () => {
-          if (dataChannel) dataChannel.removeEventListener("open", handleOpen);
-          reject(new Error("DataChannel failed to open"));
+          if (dataChannel) {
+             dataChannel.removeEventListener("open", handleOpen);
+             dataChannel.removeEventListener("close", handleFail);
+             dataChannel.removeEventListener("error", handleFail);
+          }
+          reject(new Error("DataChannel closed unexpectedly before transfer completed"));
         };
         dataChannel.addEventListener("open", handleOpen);
         dataChannel.addEventListener("close", handleFail);
