@@ -293,6 +293,7 @@ const initApp = async () => {
               showNotification("AirPaste", `${t("notifFileReceived")} ${meta.name}`, userSettings);
               
               webrtcService.dispose();
+              webrtcService = null;
             },
             (err) => {
               console.error("[WebRTC] Error:", err);
@@ -304,6 +305,10 @@ const initApp = async () => {
           const answerSdp = await webrtcService.handleOffer(data.webrtc.sdp, data.webrtc.fileMeta);
           await firebaseService.sendToMobile(roomId, await encryptPayload({ webrtc: { type: "answer", sdp: answerSdp } }));
         } else if (data.webrtc.type === "answer") {
+          if (!webrtcService) {
+            try { await firebaseService.clearRoom(currentRoomId); } catch {}
+            return;
+          }
           await webrtcService.setAnswer(data.webrtc.sdp);
           try {
             await webrtcService.sendFile(currentFileToSend);
@@ -318,9 +323,10 @@ const initApp = async () => {
           hide(elements.popupFileSending);
           elements.sendToMobileBtn.disabled = elements.sendToMobileInput.value.trim().length === 0;
           webrtcService.dispose();
+          webrtcService = null;
         }
 
-        try { await firebaseService.clearRoom(roomId); } catch {}
+        try { await firebaseService.clearRoom(currentRoomId); } catch {}
         return;
       }
 

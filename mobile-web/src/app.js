@@ -392,6 +392,7 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
               showToast(elements, t("fileSentToast", { filename: meta.name }) || "File received", "success");
               
               webrtcService.dispose();
+              webrtcService = null;
             },
             (err) => {
               console.error("[WebRTC] Error:", err);
@@ -403,6 +404,10 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
           const answerSdp = await webrtcService.handleOffer(data.webrtc.sdp, data.webrtc.fileMeta);
           await firebaseService.sendToRoom(roomId, await encryptPayload({ webrtc: { type: "answer", sdp: answerSdp } }));
         } else if (data.webrtc.type === "answer") {
+          if (!webrtcService) {
+            try { await firebaseService.clearToMobile(roomId); } catch {}
+            return;
+          }
           await webrtcService.setAnswer(data.webrtc.sdp);
           try {
             await webrtcService.sendFile(currentFileToSend);
@@ -415,6 +420,7 @@ const connectToRoom = (elements, roomId, keyBase64, t) => {
           }
           hide(elements.fileSending);
           webrtcService.dispose();
+          webrtcService = null;
         }
 
         try { await firebaseService.clearToMobile(roomId); } catch {}

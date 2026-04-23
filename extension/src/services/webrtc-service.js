@@ -12,6 +12,7 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
   let receivedSize = 0;
   let fileMeta = null;
   let resolveSend = null;
+  let isTransferComplete = false;
 
   // 16 KB is the safest chunk size across all browsers to prevent SCTP message size aborts
   const CHUNK_SIZE = 16 * 1024;
@@ -47,6 +48,7 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
     dataChannel.onmessage = (event) => {
       if (typeof event.data === "string") {
         if (event.data === "EOF") {
+          isTransferComplete = true;
           // Send ACK back so sender knows we got it
           dataChannel.send("ACK");
           // Wait briefly to ensure the ACK is actually sent over the network 
@@ -76,6 +78,7 @@ export const createWebRTCService = (onProgress, onComplete, onError) => {
     };
 
     dataChannel.onerror = (error) => {
+      if (isTransferComplete) return; // Suppress error if already complete
       console.error("[WebRTC] DataChannel error:", error);
       onError(new Error("DataChannel error occurred."));
     };
