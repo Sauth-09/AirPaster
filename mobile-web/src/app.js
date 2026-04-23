@@ -15,6 +15,7 @@ import { createCryptoService } from "./services/crypto-service.js";
 import { createFileService } from "./services/file-service.js";
 import { createSessionService } from "./services/session-service.js";
 import { createI18nService } from "./services/i18n-service.js";
+import { createQRScannerService } from "./services/qr-scanner-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM Helpers
@@ -104,6 +105,12 @@ const getElements = () => ({
   historyList: $("#history-list-mobile"),
   historyClear: $("#history-clear-mobile"),
   historyEmpty: $("#history-empty-mobile"),
+  // QR Scanner
+  scanQRBtn: $("#scan-qr-btn"),
+  qrScannerModal: $("#qr-scanner-modal"),
+  qrScannerClose: $("#qr-scanner-close"),
+  qrVideo: $("#qr-video"),
+  qrCanvas: $("#qr-canvas"),
 });
 
 // ---------------------------------------------------------------------------
@@ -420,6 +427,7 @@ const initApp = () => {
   const elements = getElements();
   const urlService = createUrlService();
   const sessionService = createSessionService();
+  const qrScannerService = createQRScannerService();
   
   const i18n = createI18nService();
   i18n.initDom();
@@ -427,6 +435,45 @@ const initApp = () => {
 
   const roomId = urlService.getRoomIdFromUrl();
   const keyBase64 = urlService.getEncryptionKeyFromUrl();
+
+  // --- QR Scanner Logic ---
+  const openQRScanner = () => {
+    show(elements.qrScannerModal);
+
+    qrScannerService
+      .startScanning(elements.qrVideo, elements.qrCanvas, (result) => {
+        // QR code scanned successfully
+        qrScannerService.stopScanning();
+        hide(elements.qrScannerModal);
+
+        showToast(elements, t("roomConnected", { roomId: result.roomId }), "success");
+
+        // Navigate to room URL or connect directly
+        hide(elements.noRoomSection);
+        removeClass(elements.connectionBar, "disconnected");
+        connectToRoom(elements, result.roomId, result.key, t);
+      })
+      .catch((error) => {
+        console.error("[App] QR scanner error:", error);
+        hide(elements.qrScannerModal);
+        showToast(elements, t("cameraAccessDenied"), "error");
+      });
+  };
+
+  const closeQRScanner = () => {
+    qrScannerService.stopScanning();
+    hide(elements.qrScannerModal);
+  };
+
+  // QR scanner button click
+  if (elements.scanQRBtn) {
+    elements.scanQRBtn.addEventListener("click", openQRScanner);
+  }
+
+  // QR scanner close button
+  if (elements.qrScannerClose) {
+    elements.qrScannerClose.addEventListener("click", closeQRScanner);
+  }
 
   // --- Room found in URL ---
   if (roomId) {

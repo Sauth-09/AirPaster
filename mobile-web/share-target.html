@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f0f14">
+  <meta name="description" content="AirPaste — Sending your shared content">
+  <title>AirPaste — Sending...</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon128.png">
+</head>
+<body>
+  <div class="app-container">
+    <div class="ambient-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-wrapper">
+        <div class="logo-icon">
+          <img src="icons/icon48.png" alt="AirPaste Logo" style="width: 32px; height: 32px; object-fit: contain;">
+        </div>
+        <h1 class="logo-text">AirPaste</h1>
+      </div>
+    </header>
+
+    <!-- Share Status Section -->
+    <main class="main-content">
+
+      <!-- Pending Share Info -->
+      <div id="share-info" class="share-info-section">
+        <div class="share-info-icon">📤</div>
+        <h2 id="share-info-title" class="share-info-title" data-i18n="shareReadyTitle">Share Ready!</h2>
+        <p id="share-info-desc" class="share-info-desc" data-i18n="shareReadyDesc">Scan the QR code on your computer screen to connect and send.</p>
+        
+        <!-- Shared content preview -->
+        <div id="share-preview" class="share-preview hidden">
+          <div id="share-preview-file" class="share-preview-item hidden">
+            <span class="share-preview-icon">📎</span>
+            <span id="share-preview-filename" class="share-preview-text">file.pdf</span>
+          </div>
+          <div id="share-preview-text" class="share-preview-item hidden">
+            <span class="share-preview-icon">📝</span>
+            <span id="share-preview-textcontent" class="share-preview-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Scanner Section -->
+      <div id="qr-scanner-section" class="qr-scanner-section hidden">
+        <div class="qr-scanner-wrapper">
+          <video id="qr-video" class="qr-video" autoplay playsinline muted></video>
+          <canvas id="qr-canvas" class="qr-canvas-hidden"></canvas>
+          <div class="qr-scanner-overlay">
+            <div class="qr-scanner-frame">
+              <div class="qr-corner qr-corner-tl"></div>
+              <div class="qr-corner qr-corner-tr"></div>
+              <div class="qr-corner qr-corner-bl"></div>
+              <div class="qr-corner qr-corner-br"></div>
+              <div class="qr-scan-line"></div>
+            </div>
+          </div>
+        </div>
+        <p class="qr-scanner-hint" data-i18n="scanQRHint">Point camera at the QR code on your computer</p>
+      </div>
+
+      <!-- Sending Progress -->
+      <div id="sending-progress" class="sending-progress hidden">
+        <div class="sending-spinner"></div>
+        <p id="sending-text" class="sending-text" data-i18n="sendingNow">Sending...</p>
+      </div>
+
+      <!-- Success State -->
+      <div id="send-success" class="send-success hidden">
+        <div class="success-icon">✓</div>
+        <h2 class="success-title" data-i18n="sentSuccessTitle">Sent!</h2>
+        <p class="success-desc" data-i18n="sentSuccessDesc">Your content has been sent to the computer.</p>
+        <button id="close-btn" class="close-btn" data-i18n="closeBtn">Close</button>
+      </div>
+
+      <!-- Error State -->
+      <div id="send-error" class="send-error hidden">
+        <div class="error-icon">✕</div>
+        <h2 class="error-title" data-i18n="sendErrorTitle">Failed to Send</h2>
+        <p id="error-desc" class="error-desc" data-i18n="sendErrorDesc">Something went wrong.</p>
+        <button id="retry-btn" class="retry-btn" data-i18n="retryBtn">Try Again</button>
+      </div>
+
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden">
+      <span id="toast-icon" class="toast-icon">✓</span>
+      <span id="toast-text" class="toast-text"></span>
+    </div>
+
+    <footer class="footer">
+      <p>AirPaste &mdash; Cloud Clipboard</p>
+    </footer>
+  </div>
+
+  <script src="dist/share-target.bundle.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('[PWA] SW registered:', reg.scope))
+          .catch((err) => console.error('[PWA] SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

@@ -34,6 +34,13 @@ const MOBILE_CONFIG = {
   format: "iife",
 };
 
+const SHARE_TARGET_CONFIG = {
+  ...SHARED_OPTIONS,
+  entryPoints: ["mobile-web/src/share-target.js"],
+  outfile: "mobile-web/dist/share-target.bundle.js",
+  format: "iife",
+};
+
 // ---------------------------------------------------------------------------
 // CLI Handling
 // ---------------------------------------------------------------------------
@@ -44,8 +51,8 @@ const isWatch = args.includes("--watch");
 
 const configs = {
   extension: [EXTENSION_POPUP_CONFIG, EXTENSION_OPTIONS_CONFIG],
-  mobile: [MOBILE_CONFIG],
-  all: [EXTENSION_POPUP_CONFIG, EXTENSION_OPTIONS_CONFIG, MOBILE_CONFIG],
+  mobile: [MOBILE_CONFIG, SHARE_TARGET_CONFIG],
+  all: [EXTENSION_POPUP_CONFIG, EXTENSION_OPTIONS_CONFIG, MOBILE_CONFIG, SHARE_TARGET_CONFIG],
 };
 
 const selectedConfigs = configs[target];

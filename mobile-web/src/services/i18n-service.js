@@ -38,7 +38,30 @@ const translations = {
     receivedFromPctoast: "Received from computer!",
     noFileSelected: "No file selected",
     fileTooLarge: "File too large ({size}MB). Max 2MB.",
-    fileStillTooLarge: "File is still too large ({size}MB) even after processing. Max 2MB."
+    fileStillTooLarge: "File is still too large ({size}MB) even after processing. Max 2MB.",
+    // QR Scanner
+    scanQRBtn: "📷 Scan QR Code",
+    scanQRHint: "Point camera at the QR code on your computer",
+    stopScanBtn: "✕ Close Scanner",
+    cameraAccessDenied: "Camera access denied. Please enable it in settings.",
+    roomConnected: "Connected to room {roomId}!",
+    qrScannerTitle: "Scan QR Code",
+    // Share Target
+    shareReadyTitle: "Share Ready!",
+    shareReadyDesc: "Scan the QR code on your computer screen to connect and send.",
+    sendingToRoom: "Sending to room {roomId}...",
+    sendingNow: "Sending...",
+    sentSuccessTitle: "Sent!",
+    sentSuccessDesc: "Your content has been sent to the computer.",
+    closeBtn: "Close",
+    sendErrorTitle: "Failed to Send",
+    sendErrorDesc: "Something went wrong.",
+    retryBtn: "Try Again",
+    noShareData: "No Shared Content",
+    noShareDataDesc: "Open this app from your phone's share menu to send content.",
+    // PWA
+    installPWA: "Install App",
+    fileReceivedLabel: "📎 File Received"
   },
   tr: {
     tagline: "Bilgisayarına anında gönder",
@@ -75,7 +98,30 @@ const translations = {
     receivedFromPctoast: "Bilgisayardan veri geldi!",
     noFileSelected: "Dosya seçilmedi",
     fileTooLarge: "Dosya çok büyük ({size}MB). Maks 2MB.",
-    fileStillTooLarge: "Dosya sıkıştırıldıktan sonra bile çok büyük ({size}MB). Maks 2MB."
+    fileStillTooLarge: "Dosya sıkıştırıldıktan sonra bile çok büyük ({size}MB). Maks 2MB.",
+    // QR Scanner
+    scanQRBtn: "📷 QR Kodu Tara",
+    scanQRHint: "Kamerayı bilgisayarınızdaki QR koda tutun",
+    stopScanBtn: "✕ Tarayıcıyı Kapat",
+    cameraAccessDenied: "Kamera erişimi reddedildi. Lütfen ayarlardan izin verin.",
+    roomConnected: "{roomId} odasına bağlandı!",
+    qrScannerTitle: "QR Kodu Tara",
+    // Share Target
+    shareReadyTitle: "Gönderi Hazır!",
+    shareReadyDesc: "Bağlanmak ve göndermek için ekrandaki QR kodu okutun.",
+    sendingToRoom: "{roomId} odasına gönderiliyor...",
+    sendingNow: "Gönderiliyor...",
+    sentSuccessTitle: "Gönderildi!",
+    sentSuccessDesc: "İçerik bilgisayara gönderildi.",
+    closeBtn: "Kapat",
+    sendErrorTitle: "Gönderilemedi",
+    sendErrorDesc: "Bir hata oluştu.",
+    retryBtn: "Tekrar Dene",
+    noShareData: "Paylaşılan İçerik Yok",
+    noShareDataDesc: "İçerik göndermek için telefonunuzun paylaşım menüsünden bu uygulamayı açın.",
+    // PWA
+    installPWA: "Uygulamayı Yükle",
+    fileReceivedLabel: "📎 Dosya Alındı"
   }
 };
 

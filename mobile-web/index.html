@@ -7,7 +7,9 @@
   <meta name="description" content="AirPaste — Send text and files from your phone to your computer instantly.">
   <title>AirPaste — Cloud Clipboard</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icons/icon128.png">
+  <link rel="apple-touch-icon" href="icons/icon128.png">
 </head>
 <body>
   <div class="app-container">
@@ -58,6 +60,43 @@
           <span data-i18n="reconnectBtn">🔄 Reconnect to last room</span>
           <span id="reconnect-info" class="reconnect-info"></span>
         </button>
+
+        <!-- QR Scanner Button -->
+        <button id="scan-qr-btn" class="scan-qr-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <rect x="14" y="14" width="3" height="3"/>
+            <line x1="20" y1="14" x2="20" y2="20"/>
+            <line x1="14" y1="20" x2="20" y2="20"/>
+          </svg>
+          <span data-i18n="scanQRBtn">📷 Scan QR Code</span>
+        </button>
+      </div>
+
+      <!-- QR Scanner Modal -->
+      <div id="qr-scanner-modal" class="qr-scanner-modal hidden">
+        <div class="qr-scanner-modal-content">
+          <button id="qr-scanner-close" class="qr-scanner-close-btn">
+            <span data-i18n="stopScanBtn">✕ Close Scanner</span>
+          </button>
+          <h2 class="qr-scanner-title" data-i18n="qrScannerTitle">Scan QR Code</h2>
+          <div class="qr-scanner-wrapper">
+            <video id="qr-video" class="qr-video" autoplay playsinline muted></video>
+            <canvas id="qr-canvas" class="qr-canvas-hidden"></canvas>
+            <div class="qr-scanner-overlay">
+              <div class="qr-scanner-frame">
+                <div class="qr-corner qr-corner-tl"></div>
+                <div class="qr-corner qr-corner-tr"></div>
+                <div class="qr-corner qr-corner-bl"></div>
+                <div class="qr-corner qr-corner-br"></div>
+                <div class="qr-scan-line"></div>
+              </div>
+            </div>
+          </div>
+          <p class="qr-scanner-hint" data-i18n="scanQRHint">Point camera at the QR code on your computer</p>
+        </div>
       </div>
 
       <!-- Text Input Section -->
@@ -157,5 +196,15 @@
   </div>
 
   <script src="dist/app.bundle.js"></script>
+  <script>
+    // Register Service Worker for PWA + Share Target
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('[PWA] SW registered:', reg.scope))
+          .catch((err) => console.error('[PWA] SW registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>

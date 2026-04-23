@@ -749,6 +749,403 @@ body {
   opacity: 0.5;
 }
 
+/* --- QR Scanner Button --- */
+.scan-qr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+  padding: var(--space-lg) var(--space-2xl);
+  border: 2px solid var(--accent-purple);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
+  border-radius: var(--radius-md);
+  color: var(--accent-purple);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all var(--transition-base);
+  width: 100%;
+  animation: pulse-border 3s ease-in-out infinite;
+}
+
+.scan-qr-btn svg {
+  stroke: var(--accent-purple);
+  flex-shrink: 0;
+}
+
+.scan-qr-btn:active {
+  transform: scale(0.97);
+  background: rgba(139, 92, 246, 0.25);
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0); }
+}
+
+/* --- QR Scanner Modal --- */
+.qr-scanner-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fade-in 300ms ease;
+}
+
+.qr-scanner-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  padding: var(--space-xl);
+}
+
+.qr-scanner-close-btn {
+  align-self: flex-end;
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-lg);
+}
+
+.qr-scanner-close-btn:active {
+  background: var(--accent-red-dim);
+  color: var(--accent-red);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.qr-scanner-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xl);
+  text-align: center;
+}
+
+.qr-scanner-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #000;
+  border: 2px solid var(--border-subtle);
+}
+
+.qr-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.qr-canvas-hidden {
+  display: none;
+}
+
+.qr-scanner-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.qr-scanner-frame {
+  width: 200px;
+  height: 200px;
+  position: relative;
+}
+
+.qr-corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-color: var(--accent-purple);
+  border-style: solid;
+  border-width: 0;
+}
+
+.qr-corner-tl {
+  top: 0; left: 0;
+  border-top-width: 3px;
+  border-left-width: 3px;
+  border-top-left-radius: 8px;
+}
+
+.qr-corner-tr {
+  top: 0; right: 0;
+  border-top-width: 3px;
+  border-right-width: 3px;
+  border-top-right-radius: 8px;
+}
+
+.qr-corner-bl {
+  bottom: 0; left: 0;
+  border-bottom-width: 3px;
+  border-left-width: 3px;
+  border-bottom-left-radius: 8px;
+}
+
+.qr-corner-br {
+  bottom: 0; right: 0;
+  border-bottom-width: 3px;
+  border-right-width: 3px;
+  border-bottom-right-radius: 8px;
+}
+
+.qr-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent-purple) 50%, transparent 100%);
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+  animation: scan-line 2.5s ease-in-out infinite;
+}
+
+@keyframes scan-line {
+  0%, 100% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  50% { top: calc(100% - 2px); opacity: 1; }
+  60% { opacity: 0; }
+}
+
+.qr-scanner-hint {
+  margin-top: var(--space-xl);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-align: center;
+  animation: fade-in 600ms ease;
+}
+
+/* --- Share Target Page Styles --- */
+.share-info-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-xl);
+  animation: fade-in 400ms ease;
+}
+
+.share-info-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-lg);
+  animation: bounce-in 600ms ease;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.share-info-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.share-info-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+.share-preview {
+  margin-top: var(--space-xl);
+  width: 100%;
+  max-width: 320px;
+}
+
+.share-preview-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+}
+
+.share-preview-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.share-preview-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Sending Progress --- */
+.sending-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3xl);
+  animation: fade-in 300ms ease;
+}
+
+.sending-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  border-top-color: var(--accent-purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: var(--space-xl);
+}
+
+.sending-text {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}
+
+/* --- Success State --- */
+.send-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-3xl);
+  animation: fade-in 400ms ease;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
+  color: white;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-xl);
+  animation: bounce-in 600ms ease;
+  box-shadow: 0 0 30px rgba(52, 211, 153, 0.3);
+}
+
+.success-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--accent-green);
+  margin-bottom: var(--space-sm);
+}
+
+.success-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2xl);
+}
+
+.close-btn {
+  padding: var(--space-md) var(--space-3xl);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.close-btn:active {
+  transform: scale(0.97);
+  background: var(--bg-card-hover);
+}
+
+/* --- Error State --- */
+.send-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-3xl);
+  animation: fade-in 400ms ease;
+}
+
+.error-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-red) 0%, #dc2626 100%);
+  color: white;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-xl);
+  animation: bounce-in 600ms ease;
+}
+
+.error-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--accent-red);
+  margin-bottom: var(--space-sm);
+}
+
+.error-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2xl);
+}
+
+.retry-btn {
+  padding: var(--space-md) var(--space-3xl);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: var(--accent-red-dim);
+  border-radius: var(--radius-md);
+  color: var(--accent-red);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.retry-btn:active {
+  transform: scale(0.97);
+  background: rgba(248, 113, 113, 0.2);
+}
+
+/* --- QR Scanner Section (inline, used in share-target.html) --- */
+.qr-scanner-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  animation: slide-up 400ms ease;
+}
+
 /* --- Utility Classes --- */
 .hidden {
   display: none !important;
