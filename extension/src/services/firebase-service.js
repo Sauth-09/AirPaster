@@ -6,8 +6,12 @@
 // ---------------------------------------------------------------------------
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set, remove, off } from "firebase/database";
+import { getDatabase, ref, onValue, set, remove, off, forceWebSockets } from "firebase/database";
 import { DB_ROOMS_PATH } from "../utils/constants.js";
+
+// Force WebSocket transport to avoid long-polling which creates dynamic <script>
+// tags at runtime, violating Chrome Extension Manifest V3 CSP (script-src 'self').
+forceWebSockets();
 
 /**
  * Creates a Firebase service instance for the extension.
