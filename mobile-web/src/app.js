@@ -203,8 +203,8 @@ const renderHistory = (elements, historyService, t) => {
 // Connect to Room (main logic)
 // ---------------------------------------------------------------------------
 
-const connectToRoom = (elements, roomId, keyBase64, t) => {
-  const firebaseService = createFirebaseService(FIREBASE_CONFIG);
+const connectToRoom = async (elements, roomId, keyBase64, t) => {
+  const firebaseService = await createFirebaseService(FIREBASE_CONFIG);
   const historyService = createHistoryService();
   const cryptoService = createCryptoService();
   const fileService = createFileService(t);

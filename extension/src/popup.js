@@ -173,7 +173,7 @@ const triggerDownload = (base64Data, fileName, mimeType) => {
 const initApp = async () => {
   const elements = getElements();
 
-  const firebaseService = createFirebaseService(FIREBASE_CONFIG);
+  const firebaseService = await createFirebaseService(FIREBASE_CONFIG);
   const roomService = createRoomService();
   const qrService = createQRService();
   const clipboardService = createClipboardService();

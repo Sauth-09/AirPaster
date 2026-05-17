@@ -6,11 +6,20 @@
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, onValue, remove, off } from "firebase/database";
+import { getAuth, signInAnonymously } from "firebase/auth";
 import { DB_ROOMS_PATH } from "../utils/constants.js";
 
-export const createFirebaseService = (config) => {
+export const createFirebaseService = async (config) => {
   const app = initializeApp(config);
   const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  try {
+    await signInAnonymously(auth);
+  } catch (error) {
+    console.error("[FirebaseService] Authentication failed:", error);
+    throw error;
+  }
 
   let activeUnsubscribe = null;
 
