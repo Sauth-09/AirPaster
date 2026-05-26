@@ -8,6 +8,24 @@ export const DB_ROOMS_PATH = "rooms";
 /** Room ID format validation regex: XXXX-XXX */
 export const ROOM_ID_REGEX = /^\d{4}-\d{3}$/;
 
+/** Room ID format: XXXX-XXX (4 digits - 3 digits) */
+export const ROOM_ID_LENGTH_LEFT = 4;
+export const ROOM_ID_LENGTH_RIGHT = 3;
+
+/** Mobile Web Base URL for QR code generation */
+export const MOBILE_WEB_BASE_URL = "https://sauth-09.github.io/AirPaster/mobile-web/";
+
+/** QR Code generation options (mobile host mode) */
+export const QR_OPTIONS = {
+  width: 240,
+  margin: 3,
+  errorCorrectionLevel: "H",
+  color: {
+    dark: "#000000",
+    light: "#ffffff",
+  },
+};
+
 /** Maximum text length allowed */
 export const MAX_TEXT_LENGTH = 10000;
 

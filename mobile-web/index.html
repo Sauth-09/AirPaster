@@ -73,6 +73,36 @@
           </svg>
           <span data-i18n="scanQRBtn">📷 Scan QR Code</span>
         </button>
+
+        <!-- Or Divider -->
+        <div class="or-divider">
+          <span data-i18n="orDivider">or</span>
+        </div>
+
+        <!-- Create Room Button -->
+        <button id="create-room-btn" class="create-room-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+          <span data-i18n="createRoomBtn">📱 Create Room</span>
+        </button>
+      </div>
+
+      <!-- QR Display Modal (shown when room is created by host) -->
+      <div id="qr-display-modal" class="qr-display-modal hidden">
+        <div class="qr-display-modal-content">
+          <button id="qr-display-close" class="qr-display-close-btn">
+            <span data-i18n="cancelRoom">✕ Cancel</span>
+          </button>
+          <h2 class="qr-display-title" data-i18n="createRoomDesc">Share with another phone</h2>
+          <div id="qr-display-container" class="qr-display-container"></div>
+          <p id="qr-display-room-id" class="qr-display-room-id"></p>
+          <div class="qr-display-waiting">
+            <div class="spinner-small"></div>
+            <span id="qr-display-status" data-i18n="waitingForPeer">Waiting for other device to scan QR...</span>
+          </div>
+        </div>
       </div>
 
       <!-- QR Scanner Modal -->

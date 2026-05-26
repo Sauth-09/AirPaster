@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // Mobile Web Entry Point — App Controller
 // ---------------------------------------------------------------------------
-// Orchestrates: text/file sending, receiving from PC, encryption,
-// session reconnect, history.
+// Orchestrates: text/file sending, receiving from PC/device, encryption,
+// session reconnect, history, and host mode (room creation for phone-to-phone).
 // ---------------------------------------------------------------------------
 
 import { FIREBASE_CONFIG } from "./config/firebase-config.js";
@@ -17,6 +17,8 @@ import { createSessionService } from "./services/session-service.js";
 import { createI18nService } from "./services/i18n-service.js";
 import { createQRScannerService } from "./services/qr-scanner-service.js";
 import { createWebRTCService } from "./services/webrtc-service.js";
+import { createRoomService } from "./services/room-service.js";
+import { createQRGeneratorService } from "./services/qr-generator-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM Helpers
@@ -88,7 +90,7 @@ const getElements = () => ({
   toast: $("#toast"),
   toastIcon: $("#toast-icon"),
   toastText: $("#toast-text"),
-  // Received from PC
+  // Received from PC/Device
   receivedFromPC: $("#received-from-pc"),
   receivedFromPCText: $("#received-from-pc-text"),
   openLinkMobileBtn: $("#open-link-mobile-btn"),
@@ -112,6 +114,13 @@ const getElements = () => ({
   qrScannerClose: $("#qr-scanner-close"),
   qrVideo: $("#qr-video"),
   qrCanvas: $("#qr-canvas"),
+  // Host Mode (Create Room)
+  createRoomBtn: $("#create-room-btn"),
+  qrDisplayModal: $("#qr-display-modal"),
+  qrDisplayClose: $("#qr-display-close"),
+  qrDisplayContainer: $("#qr-display-container"),
+  qrDisplayRoomId: $("#qr-display-room-id"),
+  qrDisplayStatus: $("#qr-display-status"),
 });
 
 // ---------------------------------------------------------------------------
@@ -200,10 +209,17 @@ const renderHistory = (elements, historyService, t) => {
 };
 
 // ---------------------------------------------------------------------------
-// Connect to Room (main logic)
+// Connect to Room (main logic) — supports both client and host modes
 // ---------------------------------------------------------------------------
 
-const connectToRoom = async (elements, roomId, keyBase64, t) => {
+/**
+ * @param {Object} elements - DOM references
+ * @param {string} roomId - Room ID to connect to
+ * @param {string|null} keyBase64 - Encryption key (base64)
+ * @param {Function} t - i18n translation function
+ * @param {boolean} isHost - true when this device created the room (host mode)
+ */
+const connectToRoom = async (elements, roomId, keyBase64, t, isHost = false) => {
   const firebaseService = await createFirebaseService(FIREBASE_CONFIG);
   const historyService = createHistoryService();
   const cryptoService = createCryptoService();
@@ -216,14 +232,45 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
   let webrtcService = null;
   let currentFileToSend = null;
 
-  // Save session for reconnect
+  // Save session for reconnect (preserve isHost flag)
   sessionService.saveSession(roomId, keyBase64);
+
+  // --- Direction-aware Firebase operations ---
+  // Host writes to toMobile, listens on toPC (like the extension does)
+  // Client writes to toPC, listens on toMobile (existing behavior)
+  const sendPayload = isHost
+    ? (payload) => firebaseService.sendToMobile(roomId, payload)
+    : (payload) => firebaseService.sendToRoom(roomId, payload);
+
+  const listenForData = isHost
+    ? (cb) => firebaseService.listenToPC(roomId, cb)
+    : (cb) => firebaseService.listenToRoom(roomId, cb);
+
+  const clearIncoming = isHost
+    ? () => firebaseService.clearToPC(roomId)
+    : () => firebaseService.clearToMobile(roomId);
+
+  // Determine labels based on mode
+  const sentToastKey = isHost ? "sentToDevice" : "sentToComputerToast";
+  const receivedToastKey = isHost ? "peerConnected" : "receivedFromPctoast";
 
   // Update UI
   setText(elements.connectionText, t("connectedToRoom"));
   setText(elements.connectionRoomId, roomId);
   hide(elements.noRoomSection);
   show(elements.inputSection);
+
+  // Update send button text based on mode
+  const sendBtnText = document.getElementById("send-btn-text");
+  if (sendBtnText && isHost) {
+    setText(sendBtnText, t("sendToDevice"));
+  }
+
+  // Update "From Computer" label for host mode
+  const fromLabel = document.querySelector(".received-from-pc-label");
+  if (fromLabel && isHost) {
+    setText(fromLabel, t("receivedFromDevice"));
+  }
 
   // Show encryption badge if key present
   if (keyBase64) {
@@ -270,10 +317,10 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
     setSendLoading(elements, true);
     try {
       const payload = await encryptPayload({ text });
-      await firebaseService.sendToRoom(roomId, payload);
+      await sendPayload(payload);
       historyService.addItem(text, "sent");
       renderHistory(elements, historyService, t);
-      showToast(elements, t("sentToComputerToast"), "success");
+      showToast(elements, t(sentToastKey), "success");
       elements.textInput.value = "";
       updateCharCount(elements);
     } catch (err) {
@@ -315,7 +362,7 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
         const payload = await encryptPayload({
           webrtc: { type: "offer", sdp: offerSdp, fileMeta: { name: file.name, size: file.size, type: file.type } }
         });
-        await firebaseService.sendToRoom(roomId, payload);
+        await sendPayload(payload);
         setText(elements.fileSendingText, t("p2pConnecting"));
         return; // UI completes when answer received
       }
@@ -323,7 +370,7 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
       // Normal Firebase Transfer for <= 10MB
       const processedFile = await fileService.processFile(file);
       const payload = await encryptPayload({ file: processedFile });
-      await firebaseService.sendToRoom(roomId, payload);
+      await sendPayload(payload);
       historyService.addItem(`📎 ${file.name}`, "sent");
       renderHistory(elements, historyService, t);
       showToast(elements, t("fileSentToast", { filename: file.name }), "success");
@@ -347,11 +394,11 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
     e.target.value = "";
   });
 
-  // --- Listen for data from PC ---
+  // --- Listen for data from the other side ---
   const initListener = async () => {
     await setupEncryption();
 
-    firebaseService.listenToRoom(roomId, async (rawData, error) => {
+    listenForData(async (rawData, error) => {
       if (error) { console.error("[App] Listen error:", error); return; }
       if (!rawData) return;
 
@@ -402,10 +449,10 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
           );
 
           const answerSdp = await webrtcService.handleOffer(data.webrtc.sdp, data.webrtc.fileMeta);
-          await firebaseService.sendToRoom(roomId, await encryptPayload({ webrtc: { type: "answer", sdp: answerSdp } }));
+          await sendPayload(await encryptPayload({ webrtc: { type: "answer", sdp: answerSdp } }));
         } else if (data.webrtc.type === "answer") {
           if (!webrtcService) {
-            try { await firebaseService.clearToMobile(roomId); } catch {}
+            try { await clearIncoming(); } catch {}
             return;
           }
           await webrtcService.setAnswer(data.webrtc.sdp);
@@ -423,7 +470,7 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
           webrtcService = null;
         }
 
-        try { await firebaseService.clearToMobile(roomId); } catch {}
+        try { await clearIncoming(); } catch {}
         return;
       }
 
@@ -461,10 +508,10 @@ const connectToRoom = async (elements, roomId, keyBase64, t) => {
 
         historyService.addItem(data.text, "received");
         renderHistory(elements, historyService, t);
-        showToast(elements, t("receivedFromPctoast"), "success");
+        showToast(elements, t(receivedToastKey), "success");
       }
 
-      try { await firebaseService.clearToMobile(roomId); } catch {}
+      try { await clearIncoming(); } catch {}
     });
   };
 
@@ -535,6 +582,8 @@ const initApp = () => {
   const urlService = createUrlService();
   const sessionService = createSessionService();
   const qrScannerService = createQRScannerService();
+  const roomService = createRoomService();
+  const qrGeneratorService = createQRGeneratorService();
   
   const i18n = createI18nService();
   i18n.initDom();
@@ -543,7 +592,7 @@ const initApp = () => {
   const roomId = urlService.getRoomIdFromUrl();
   const keyBase64 = urlService.getEncryptionKeyFromUrl();
 
-  // --- QR Scanner Logic ---
+  // --- QR Scanner Logic (Client Mode) ---
   const openQRScanner = () => {
     show(elements.qrScannerModal);
 
@@ -558,7 +607,7 @@ const initApp = () => {
         // Navigate to room URL or connect directly
         hide(elements.noRoomSection);
         removeClass(elements.connectionBar, "disconnected");
-        connectToRoom(elements, result.roomId, result.key, t);
+        connectToRoom(elements, result.roomId, result.key, t, false);
       })
       .catch((error) => {
         console.error("[App] QR scanner error:", error);
@@ -582,9 +631,78 @@ const initApp = () => {
     elements.qrScannerClose.addEventListener("click", closeQRScanner);
   }
 
+  // --- Create Room Logic (Host Mode) ---
+  const handleCreateRoom = async () => {
+    try {
+      const cryptoService = createCryptoService();
+
+      // Generate room ID and encryption key
+      const newRoomId = roomService.generateRoomId();
+      const cryptoKey = await cryptoService.generateKey();
+      const newKeyBase64 = await cryptoService.exportKey(cryptoKey);
+
+      // Build QR URL
+      const mobileUrl = roomService.buildMobileUrl(newRoomId, newKeyBase64);
+
+      // Show QR display modal
+      show(elements.qrDisplayModal);
+      setText(elements.qrDisplayRoomId, newRoomId);
+      setText(elements.qrDisplayStatus, t("waitingForPeer"));
+
+      // Generate QR code
+      await qrGeneratorService.generateQRCode(elements.qrDisplayContainer, mobileUrl);
+
+      // Listen for the peer to connect (they will write to toPC)
+      const firebaseService = await createFirebaseService(FIREBASE_CONFIG);
+
+      let peerDetected = false;
+
+      firebaseService.listenToPC(newRoomId, async (rawData, error) => {
+        if (error || !rawData || peerDetected) return;
+
+        // Peer has connected and sent data!
+        peerDetected = true;
+        firebaseService.dispose();
+
+        // Close QR display modal
+        hide(elements.qrDisplayModal);
+        qrGeneratorService.clearQRCode(elements.qrDisplayContainer);
+
+        // Show connected toast
+        showToast(elements, t("peerConnected"), "success");
+
+        // Enter host mode: connect to room as host
+        hide(elements.noRoomSection);
+        removeClass(elements.connectionBar, "disconnected");
+        connectToRoom(elements, newRoomId, newKeyBase64, t, true);
+      });
+
+      console.log(`[App] Room created: ${newRoomId}, waiting for peer...`);
+
+    } catch (error) {
+      console.error("[App] Create room error:", error);
+      showToast(elements, t("failedToSendToast"), "error");
+    }
+  };
+
+  const closeQRDisplay = () => {
+    hide(elements.qrDisplayModal);
+    qrGeneratorService.clearQRCode(elements.qrDisplayContainer);
+  };
+
+  // Create room button click
+  if (elements.createRoomBtn) {
+    elements.createRoomBtn.addEventListener("click", handleCreateRoom);
+  }
+
+  // QR display close button
+  if (elements.qrDisplayClose) {
+    elements.qrDisplayClose.addEventListener("click", closeQRDisplay);
+  }
+
   // --- Room found in URL ---
   if (roomId) {
-    connectToRoom(elements, roomId, keyBase64, t);
+    connectToRoom(elements, roomId, keyBase64, t, false);
     return;
   }
 
@@ -611,7 +729,7 @@ const initApp = () => {
     elements.reconnectBtn.addEventListener("click", () => {
       hide(elements.noRoomSection);
       removeClass(elements.connectionBar, "disconnected");
-      connectToRoom(elements, lastSession.roomId, lastSession.encryptionKey, t);
+      connectToRoom(elements, lastSession.roomId, lastSession.encryptionKey, t, false);
     });
   }
 };

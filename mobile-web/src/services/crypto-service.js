@@ -25,6 +25,32 @@ const base64ToBytes = (base64) => {
 };
 
 export const createCryptoService = () => {
+  /**
+   * Generate a new AES-256-GCM encryption key.
+   * @returns {Promise<CryptoKey>}
+   */
+  const generateKey = async () => {
+    return crypto.subtle.generateKey(
+      { name: ALGORITHM, length: KEY_LENGTH },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  };
+
+  /**
+   * Export a CryptoKey to a URL-safe base64 string.
+   * @param {CryptoKey} key
+   * @returns {Promise<string>}
+   */
+  const exportKey = async (key) => {
+    const raw = await crypto.subtle.exportKey("raw", key);
+    const bytes = new Uint8Array(raw);
+    return btoa(String.fromCharCode.apply(null, bytes))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+  };
+
   const importKey = async (base64) => {
     const normalized = base64.replace(/-/g, "+").replace(/_/g, "/");
     const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
@@ -69,5 +95,5 @@ export const createCryptoService = () => {
     return new TextDecoder().decode(plainBuffer);
   };
 
-  return Object.freeze({ importKey, encrypt, decrypt });
+  return Object.freeze({ generateKey, exportKey, importKey, encrypt, decrypt });
 };

@@ -67,7 +67,18 @@ const translations = {
     p2pReceivingPercent: "Receiving: {percent}%",
     p2pTransferFailed: "P2P transfer failed",
     p2pSendingPercent: "Sending: {percent}%",
-    p2pConnecting: "Connecting P2P..."
+    p2pConnecting: "Connecting P2P...",
+    // Host Mode (phone-to-phone)
+    createRoomBtn: "📱 Create Room",
+    createRoomDesc: "Share with another phone",
+    waitingForPeer: "Waiting for other device to scan QR...",
+    peerConnected: "Device connected!",
+    roomCreated: "Room created: {roomId}",
+    cancelRoom: "✕ Cancel",
+    orDivider: "or",
+    sentToDevice: "Sent to device!",
+    receivedFromDevice: "📥 From Device",
+    sendToDevice: "Send to Device"
   },
   tr: {
     tagline: "Bilgisayarına anında gönder",
@@ -133,7 +144,18 @@ const translations = {
     p2pReceivingPercent: "Alınıyor: %{percent}",
     p2pTransferFailed: "P2P transferi başarısız oldu",
     p2pSendingPercent: "Gönderiliyor: %{percent}",
-    p2pConnecting: "P2P Bağlanıyor..."
+    p2pConnecting: "P2P Bağlanıyor...",
+    // Host Mode (phone-to-phone)
+    createRoomBtn: "📱 Oda Oluştur",
+    createRoomDesc: "Başka bir telefonla paylaş",
+    waitingForPeer: "Diğer cihazın QR taraması bekleniyor...",
+    peerConnected: "Cihaz bağlandı!",
+    roomCreated: "Oda oluşturuldu: {roomId}",
+    cancelRoom: "✕ İptal",
+    orDivider: "veya",
+    sentToDevice: "Cihaza gönderildi!",
+    receivedFromDevice: "📥 Cihazdan Gelen",
+    sendToDevice: "Cihaza Gönder"
   }
 };
 
