@@ -46,7 +46,7 @@ self.addEventListener("activate", (event) => {
 });
 
 // ---------------------------------------------------------------------------
-// Fetch — Share Target POST interception + cache-first for assets
+// Fetch — Share Target POST interception + smart caching strategies
 // ---------------------------------------------------------------------------
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
@@ -64,7 +64,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // --- Cache-first strategy for GET requests ---
+  // --- Network-first for HTML and JS (always get latest code) ---
+  const pathname = url.pathname;
+  const isCodeAsset =
+    pathname.endsWith(".html") ||
+    pathname.endsWith(".js");
+
+  if (isCodeAsset) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Update cache with the fresh response
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => {
+          // Offline fallback: serve from cache
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // --- Cache-first for static assets (images, CSS, fonts) ---
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request);
