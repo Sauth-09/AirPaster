@@ -110,7 +110,7 @@ const sendSharedData = async (elements, sharedData, roomId, keyBase64, t) => {
   hide(elements.qrScannerSection);
   show(elements.sendingProgress);
 
-  const firebaseService = createFirebaseService(FIREBASE_CONFIG);
+  const firebaseService = await createFirebaseService(FIREBASE_CONFIG);
   const cryptoService = createCryptoService();
   const sessionService = createSessionService();
   const fileService = createFileService(t);
@@ -161,7 +161,7 @@ const sendSharedData = async (elements, sharedData, roomId, keyBase64, t) => {
           }
         );
 
-        firebaseService.listenToMobile(roomId, async (rawData, error) => {
+        firebaseService.listenToRoom(roomId, async (rawData, error) => {
           if (error || !rawData) return;
           const data = await decryptPayload(rawData);
           if (!data || !data.webrtc) return;
