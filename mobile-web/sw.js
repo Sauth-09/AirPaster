@@ -124,9 +124,11 @@ async function handleShareTarget(request) {
     });
 
     // Redirect to share-target.html (GET) so the page can process the data
-    return Response.redirect("./share-target.html", 303);
+    const redirectUrl = new URL("./share-target.html", request.url).href;
+    return Response.redirect(redirectUrl, 303);
   } catch (error) {
     console.error("[SW] Share target error:", error);
-    return Response.redirect("./share-target.html?error=1", 303);
+    const errorRedirectUrl = new URL("./share-target.html?error=1", request.url).href;
+    return Response.redirect(errorRedirectUrl, 303);
   }
 }

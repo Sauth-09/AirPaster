@@ -19,6 +19,7 @@ import { createQRScannerService } from "./services/qr-scanner-service.js";
 import { createWebRTCService } from "./services/webrtc-service.js";
 import { createRoomService } from "./services/room-service.js";
 import { createQRGeneratorService } from "./services/qr-generator-service.js";
+import { createUpdateService } from "./services/update-service.js";
 
 // ---------------------------------------------------------------------------
 // DOM Helpers
@@ -121,6 +122,7 @@ const getElements = () => ({
   qrDisplayContainer: $("#qr-display-container"),
   qrDisplayRoomId: $("#qr-display-room-id"),
   qrDisplayStatus: $("#qr-display-status"),
+  forceUpdateBtn: $("#force-update-btn"),
 });
 
 // ---------------------------------------------------------------------------
@@ -588,6 +590,20 @@ const initApp = () => {
   const i18n = createI18nService();
   i18n.initDom();
   const t = i18n.t;
+
+  const updateService = createUpdateService();
+
+  // --- Force Update ---
+  if (elements.forceUpdateBtn) {
+    elements.forceUpdateBtn.addEventListener("click", async () => {
+      const confirmText = i18n.lang === "tr"
+        ? "Uygulamayı en son sürüme güncellemek için önbellek temizlenip sayfa yeniden yüklenecektir. Emin misiniz?"
+        : "The application will clear cache and reload to update to the latest version. Are you sure?";
+      if (confirm(confirmText)) {
+        await updateService.forceUpdate();
+      }
+    });
+  }
 
   const roomId = urlService.getRoomIdFromUrl();
   const keyBase64 = urlService.getEncryptionKeyFromUrl();

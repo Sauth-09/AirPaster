@@ -78,7 +78,8 @@ const translations = {
     orDivider: "or",
     sentToDevice: "Sent to device!",
     receivedFromDevice: "📥 From Device",
-    sendToDevice: "Send to Device"
+    sendToDevice: "Send to Device",
+    forceUpdateBtn: "🔄 Force Update"
   },
   tr: {
     tagline: "Bilgisayarına anında gönder",
@@ -155,7 +156,8 @@ const translations = {
     orDivider: "veya",
     sentToDevice: "Cihaza gönderildi!",
     receivedFromDevice: "📥 Cihazdan Gelen",
-    sendToDevice: "Cihaza Gönder"
+    sendToDevice: "Cihaza Gönder",
+    forceUpdateBtn: "🔄 Uygulamayı Güncelle"
   }
 };
 
