@@ -4,12 +4,12 @@
 // Handles: offline caching, Web Share Target file interception.
 // ---------------------------------------------------------------------------
 
-const CACHE_NAME = "airpaste-v2";
+const CACHE_NAME = "airpaste-v3";
 const ASSETS_TO_CACHE = [
   "./index.html",
   "./styles.css",
-  "./dist/app.bundle.js",
-  "./dist/share-target.bundle.js",
+  "./dist/app.bundle.js?v=2",
+  "./dist/share-target.bundle.js?v=2",
   "./icons/icon48.png",
   "./icons/icon128.png",
   "./share-target.html",
